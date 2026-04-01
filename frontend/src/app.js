@@ -152,13 +152,11 @@ function rankingRatio(st) {
 function renderRanking() {
   const ranked = [...appState.stations]
     .map((s) => {
-      const ratio = rankingRatio(s);
-      const rental = Number(s.rentalCount) || 0;
-      const score = rental * ratio;
-      return { stationName: s.stationName, score };
+      const bikeCount = Number(s.availableBike) || 0;
+      return { stationName: s.stationName, bikeCount };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 7);
+    .sort((a, b) => b.bikeCount - a.bikeCount)
+    .slice(0, 10);
 
   els.rankList.innerHTML = "";
   if (!ranked.length) {
@@ -172,7 +170,7 @@ function renderRanking() {
   ranked.forEach((r, idx) => {
     const li = document.createElement("li");
     li.className = "rankItem";
-    li.innerHTML = `<span class="rankName">${idx + 1}. ${r.stationName}</span><span class="rankScore">${Math.round(r.score)}</span>`;
+    li.innerHTML = `<span class="rankName">${idx + 1}. ${r.stationName}</span>`;
     els.rankList.appendChild(li);
   });
 }
