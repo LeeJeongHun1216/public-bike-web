@@ -3,7 +3,7 @@
 function svgMarker(color, label) {
   // 초보자 포인트: SVG를 data URL로 만들어 MarkerImage로 사용합니다.
   const svg = encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="48" viewBox="0 0 44 48">
+    `<svg xmlns="http://www.w3.org/2000/svg" width="38" height="42" viewBox="0 0 44 48">
       <path d="M22 47c9-12 16-20 16-30A16 16 0 1 0 6 17c0 10 7 18 16 30z" fill="${color}"/>
       <circle cx="22" cy="18" r="9" fill="white" opacity="0.95"/>
       <text x="22" y="22" text-anchor="middle" font-size="14" font-family="Arial" fill="${color}" font-weight="800">${label}</text>
@@ -15,8 +15,8 @@ function svgMarker(color, label) {
 export function createMarkerImage({ color, level }) {
   const label = level === "low" ? "!" : level === "mid" ? "!" : "🚲";
   const url = svgMarker(color, label);
-  const size = new kakao.maps.Size(44, 48);
-  const offset = new kakao.maps.Point(22, 44);
+  const size = new kakao.maps.Size(38, 42);
+  const offset = new kakao.maps.Point(19, 39);
   return new kakao.maps.MarkerImage(url, size, { offset });
 }
 
