@@ -13,17 +13,17 @@ const els = {
   cardRatio: document.getElementById("cardRatio"),
   cardCongestion: document.getElementById("cardCongestion"),
   cardUsage: document.getElementById("cardUsage"),
-  cardPeak: document.getElementById("cardPeak"),
 
   favToggleBtn: document.getElementById("favToggleBtn"),
   favToggleIcon: document.getElementById("favToggleIcon"),
 
-  statSource: document.getElementById("statSource"),
-  statCount: document.getElementById("statCount"),
-  statTop: document.getElementById("statTop"),
+  regionStationCount: document.getElementById("regionStationCount"),
+  rankList: document.getElementById("rankList"),
 
   findStationBtn: document.getElementById("findStationBtn"),
   findReturnBtn: document.getElementById("findReturnBtn"),
+  stationSearchInput: document.getElementById("stationSearchInput"),
+  searchClearBtn: document.getElementById("searchClearBtn"),
   startDate: document.getElementById("startDate"),
   endDate: document.getElementById("endDate"),
   applyDateBtn: document.getElementById("applyDateBtn"),
@@ -66,16 +66,6 @@ function ratioToLevel(ratio) {
   if (ratio < 0.3) return { label: "부족", color: "#EF4444" };
   if (ratio < 0.7) return { label: "보통", color: "#F59E0B" };
   return { label: "여유", color: "#22C55E" };
-}
-
-function computeStationPeakHour(hourly) {
-  if (!hourly) return null;
-  const entries = Object.entries(hourly)
-    .map(([k, v]) => [k, Number(v)])
-    .filter(([, v]) => Number.isFinite(v));
-  if (!entries.length) return null;
-  entries.sort((a, b) => b[1] - a[1]);
-  return entries[0][0];
 }
 
 function setTabActive(regionKey) {
@@ -151,11 +141,40 @@ function renderMarkers() {
 }
 
 function updateStatsUI() {
-  els.statSource.textContent = appState.source || "-";
-  els.statCount.textContent = String(appState.stations.length);
+  els.regionStationCount.textContent = `${appState.currentRegion} 대여소 ${appState.stations.length}개`;
+}
 
-  const top1 = appState.stats?.topStations?.[0];
-  els.statTop.textContent = top1 ? `${top1.stationName} (${top1.rentalCount})` : "-";
+function rankingRatio(st) {
+  if (Number(st.totalRack) > 0) return st.congestion?.ratio ?? 0;
+  return fallbackRatioByAvailable(st) ?? 0;
+}
+
+function renderRanking() {
+  const ranked = [...appState.stations]
+    .map((s) => {
+      const ratio = rankingRatio(s);
+      const rental = Number(s.rentalCount) || 0;
+      const score = rental * ratio;
+      return { stationName: s.stationName, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 7);
+
+  els.rankList.innerHTML = "";
+  if (!ranked.length) {
+    const li = document.createElement("li");
+    li.className = "rankItem";
+    li.innerHTML = `<span class="rankName">데이터 없음</span><span class="rankScore">-</span>`;
+    els.rankList.appendChild(li);
+    return;
+  }
+
+  ranked.forEach((r, idx) => {
+    const li = document.createElement("li");
+    li.className = "rankItem";
+    li.innerHTML = `<span class="rankName">${idx + 1}. ${r.stationName}</span><span class="rankScore">${Math.round(r.score)}</span>`;
+    els.rankList.appendChild(li);
+  });
 }
 
 function updateCard(st) {
@@ -166,7 +185,6 @@ function updateCard(st) {
     els.cardRatio.textContent = "-";
     els.cardCongestion.textContent = "-";
     els.cardUsage.textContent = "-";
-    els.cardPeak.textContent = "-";
     els.favToggleBtn.disabled = true;
     els.favToggleIcon.textContent = "☆";
     return;
@@ -182,18 +200,13 @@ function updateCard(st) {
     ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF" }
     : ratioToLevel(fallbackRatio);
 
-  els.cardBikes.textContent = hasRack
-    ? `자전거 ${st.availableBike}대 / 거치대 ${st.totalRack}개`
-    : `자전거 ${st.availableBike}대 / 거치대 정보없음`;
+  els.cardBikes.textContent = `자전거 ${st.availableBike}대`;
   els.cardRatio.textContent = fmtPct(displayRatio);
   els.cardCongestion.textContent = hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
-
-  const peak = computeStationPeakHour(st.hourly);
-  els.cardPeak.textContent = peak ? `${peak}시` : appState.stats?.peakHour ? `${appState.stats.peakHour}시(지역)` : "-";
 
   els.favToggleBtn.disabled = false;
   els.favToggleIcon.textContent = isFavorite(appState.favorites, st.stationId) ? "★" : "☆";
@@ -229,6 +242,7 @@ async function loadRegion(regionKey) {
   renderMarkers();
   renderFavorites();
   updateStatsUI();
+  renderRanking();
 }
 
 async function onRegionClick(regionKey) {
@@ -288,6 +302,45 @@ function pickBestStation({ user, mode }) {
   return candidates[0]?.s || null;
 }
 
+function pickBestFromMatches(matches, mode) {
+  const ranked = [...matches]
+    .map((s) => {
+      const ratio = rankingRatio(s) ?? 0;
+      const rental = Number(s.rentalCount) || 0;
+      return { s, ratio, rental };
+    })
+    .sort((a, b) => {
+      if (mode === "rent") {
+        if (b.ratio !== a.ratio) return b.ratio - a.ratio;
+        return b.rental - a.rental;
+      }
+      if (a.ratio !== b.ratio) return a.ratio - b.ratio;
+      return b.rental - a.rental;
+    });
+  return ranked[0]?.s || null;
+}
+
+function searchAndSelect(mode) {
+  const keyword = (els.stationSearchInput?.value || "").trim().toLowerCase();
+  if (!keyword) return false;
+
+  const matches = appState.stations.filter((s) =>
+    String(s.stationName || "").toLowerCase().includes(keyword),
+  );
+  if (!matches.length) {
+    alert("검색 결과가 없습니다.");
+    return true;
+  }
+
+  const best = pickBestFromMatches(matches, mode);
+  if (!best) {
+    alert("검색 결과가 없습니다.");
+    return true;
+  }
+  selectStation(best.stationId, { pan: true });
+  return true;
+}
+
 function wireEvents() {
   els.favToggleBtn.addEventListener("click", () => {
     const st = appState.stations.find((s) => s.stationId === appState.selectedStationId);
@@ -298,6 +351,7 @@ function wireEvents() {
   });
 
   els.findStationBtn.addEventListener("click", async () => {
+    if (searchAndSelect("rent")) return;
     try {
       const user = await getUserLocation();
       const best = pickBestStation({ user, mode: "rent" });
@@ -309,6 +363,7 @@ function wireEvents() {
   });
 
   els.findReturnBtn.addEventListener("click", async () => {
+    if (searchAndSelect("return")) return;
     try {
       const user = await getUserLocation();
       const best = pickBestStation({ user, mode: "return" });
@@ -316,6 +371,18 @@ function wireEvents() {
       selectStation(best.stationId, { pan: true });
     } catch (e) {
       alert(String(e?.message || e));
+    }
+  });
+
+  els.searchClearBtn?.addEventListener("click", () => {
+    if (els.stationSearchInput) els.stationSearchInput.value = "";
+    els.stationSearchInput?.focus();
+  });
+
+  els.stationSearchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      searchAndSelect("rent");
     }
   });
 
@@ -362,6 +429,7 @@ async function bootstrap() {
   renderMarkers();
   renderFavorites();
   updateStatsUI();
+  renderRanking();
   updateCard(null);
   wireEvents();
 

@@ -76,28 +76,17 @@
                   <div class="row__k">대여/반납</div>
                   <div class="row__v" id="cardUsage">-</div>
                 </div>
-                <div class="row">
-                  <div class="row__k">피크 시간대</div>
-                  <div class="row__v" id="cardPeak">-</div>
-                </div>
               </div>
 
               <div class="card__stats">
-                <div class="card__statsTitle">간단 통계</div>
-                <div class="miniStats" id="miniStats">
-                  <div class="miniStats__item">
-                    <div class="miniStats__k">데이터 소스</div>
-                    <div class="miniStats__v" id="statSource">-</div>
-                  </div>
-                  <div class="miniStats__item">
-                    <div class="miniStats__k">대여소 수</div>
-                    <div class="miniStats__v" id="statCount">-</div>
-                  </div>
-                  <div class="miniStats__item">
-                    <div class="miniStats__k">인기 TOP</div>
-                    <div class="miniStats__v" id="statTop">-</div>
-                  </div>
-                </div>
+                <div class="card__statsTitle">지역 대여소 수</div>
+                <div class="countBox" id="regionStationCount">-</div>
+              </div>
+
+              <div class="card__stats">
+                <div class="card__statsTitle">추천 순위 (대여횟수 × 대여가능확률)</div>
+                <ul class="rankList" id="rankList"></ul>
+                <div class="card__sub">대여횟수와 대여가능확률을 곱한 점수 기준으로 정렬됩니다.</div>
               </div>
 
               <div class="card__stats">
@@ -114,6 +103,15 @@
           </div>
 
           <div class="actions">
+            <div class="searchRow">
+              <input
+                class="searchInput"
+                id="stationSearchInput"
+                type="text"
+                placeholder="대여소명 검색 (예: 강남, 시청)"
+              />
+              <button class="searchClearBtn" id="searchClearBtn" type="button">지우기</button>
+            </div>
             <button class="actionBtn actionBtn--green" id="findStationBtn" type="button">
               대여소 찾기
             </button>
