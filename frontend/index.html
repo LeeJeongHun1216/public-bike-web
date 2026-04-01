@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>전국 공영자전거 통합 정보</title>
+    <title>전국 공영자전거 통합 정보 - Windows 2000</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -14,6 +14,12 @@
           <div class="brand__title">전국 공영자전거 통합 정보 웹서비스</div>
         </div>
 
+        <div class="win-menubar" role="menubar">
+          <span class="win-menuitem">파일(F)</span>
+          <span class="win-menuitem">보기(V)</span>
+          <span class="win-menuitem">즐겨찾기(A)</span>
+          <span class="win-menuitem">도움말(H)</span>
+        </div>
         <nav class="tabs" id="regionTabs" aria-label="지역 탭"></nav>
       </header>
 
@@ -121,6 +127,10 @@
           </div>
         </section>
       </main>
+      <div class="win-statusbar" id="winStatusBar" aria-live="polite">
+        <span class="win-statusbar__cell">준비</span>
+        <span class="win-statusbar__cell win-statusbar__cell--right">공영자전거 통합정보 v1.0</span>
+      </div>
     </div>
 
     <!-- 설정 파일(키/백엔드 주소) -->
