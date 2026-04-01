@@ -13,8 +13,7 @@ function svgMarker(color, label) {
 }
 
 export function createMarkerImage({ color, level }) {
-  // 일부 환경에서 이모지 렌더링이 깨져 이상한 아이콘으로 보일 수 있어 단순 기호만 사용
-  const label = level === "low" ? "!" : level === "mid" ? "!" : "";
+  const label = level === "low" ? "!" : level === "mid" ? "!" : "🚲";
   const url = svgMarker(color, label);
   const size = new kakao.maps.Size(44, 48);
   const offset = new kakao.maps.Point(22, 44);

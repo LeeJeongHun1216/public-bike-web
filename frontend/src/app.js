@@ -27,7 +27,6 @@ const els = {
   startDate: document.getElementById("startDate"),
   endDate: document.getElementById("endDate"),
   applyDateBtn: document.getElementById("applyDateBtn"),
-  themeToggleBtn: document.getElementById("themeToggleBtn"),
 };
 
 const DEFAULT_REGION = "서울";
@@ -48,20 +47,6 @@ let appState = {
 
 let map = null;
 let markers = [];
-
-function applyTheme(mode) {
-  const dark = mode === "dark";
-  document.body.classList.toggle("dark", dark);
-  if (els.themeToggleBtn) {
-    els.themeToggleBtn.textContent = dark ? "☀️" : "🌙";
-    els.themeToggleBtn.title = dark ? "라이트 모드" : "다크 모드";
-  }
-}
-
-function initTheme() {
-  const saved = localStorage.getItem("bike_theme") || "light";
-  applyTheme(saved);
-}
 
 function fmtPct(ratio) {
   if (ratio == null || !Number.isFinite(Number(ratio))) return "-";
@@ -403,12 +388,6 @@ function wireEvents() {
     }
   });
 
-  els.themeToggleBtn?.addEventListener("click", () => {
-    const next = document.body.classList.contains("dark") ? "light" : "dark";
-    localStorage.setItem("bike_theme", next);
-    applyTheme(next);
-  });
-
   els.applyDateBtn?.addEventListener("click", async () => {
     // HTML date input: YYYY-MM-DD → API: YYYYMMDD
     const toYmd = (v) => (v ? v.replaceAll("-", "") : "");
@@ -436,7 +415,6 @@ function wireEvents() {
 }
 
 async function bootstrap() {
-  initTheme();
   await ensureKakaoLoaded();
 
   // 초기 지도 생성: 서울 중심(탭 클릭 시 이동)
