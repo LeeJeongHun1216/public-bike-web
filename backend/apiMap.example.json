@@ -1,0 +1,13 @@
+{
+  "서울": {
+    "stationsUrl": "https://api.example.com/stations/seoul",
+    "stockUrl": "https://api.example.com/stock/seoul",
+    "usageUrl": "https://api.example.com/usage/seoul"
+  },
+  "부산 기장군": {
+    "stationsUrl": "https://api.example.com/stations/gijang",
+    "stockUrl": "https://api.example.com/stock/gijang",
+    "usageUrl": "https://api.example.com/usage/gijang"
+  }
+}
+

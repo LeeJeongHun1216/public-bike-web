@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>전국 공영자전거 통합 정보</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand__icon" aria-hidden="true">🚲</div>
+          <div class="brand__title">전국 공영자전거 통합 정보 웹서비스</div>
+        </div>
+
+        <nav class="tabs" id="regionTabs" aria-label="지역 탭"></nav>
+      </header>
+
+      <main class="main">
+        <section class="mapWrap">
+          <div id="map" class="map" role="application" aria-label="지도"></div>
+
+          <div class="legend" aria-label="혼잡도 범례">
+            <div class="legend__item">
+              <span class="dot dot--red"></span>
+              <span class="legend__label">부족</span>
+            </div>
+            <div class="legend__item">
+              <span class="dot dot--yellow"></span>
+              <span class="legend__label">보통</span>
+            </div>
+            <div class="legend__item">
+              <span class="dot dot--green"></span>
+              <span class="legend__label">여유</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="bottom">
+          <div class="bottom__grid">
+            <aside class="fav">
+              <div class="fav__title">
+                <span class="fav__star">★</span>
+                즐겨찾기
+              </div>
+              <ul class="fav__list" id="favList" aria-label="즐겨찾기 목록"></ul>
+              <div class="fav__empty" id="favEmpty">즐겨찾기가 비어있습니다.</div>
+            </aside>
+
+            <article class="card" id="stationCard" aria-label="대여소 정보 카드">
+              <div class="card__header">
+                <div>
+                  <div class="card__title" id="cardTitle">대여소를 선택하세요</div>
+                  <div class="card__sub" id="cardSub">마커를 누르면 상세 정보가 표시됩니다.</div>
+                </div>
+                <button class="iconBtn" id="favToggleBtn" type="button" disabled>
+                  <span id="favToggleIcon" aria-hidden="true">☆</span>
+                  <span class="srOnly">즐겨찾기 토글</span>
+                </button>
+              </div>
+
+              <div class="card__rows">
+                <div class="row">
+                  <div class="row__k">자전거</div>
+                  <div class="row__v" id="cardBikes">-</div>
+                </div>
+                <div class="row">
+                  <div class="row__k">대여 가능 확률</div>
+                  <div class="row__v">
+                    <span class="pill" id="cardRatio">-</span>
+                    <span class="pill pill--muted" id="cardCongestion">-</span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="row__k">대여/반납</div>
+                  <div class="row__v" id="cardUsage">-</div>
+                </div>
+                <div class="row">
+                  <div class="row__k">피크 시간대</div>
+                  <div class="row__v" id="cardPeak">-</div>
+                </div>
+              </div>
+
+              <div class="card__stats">
+                <div class="card__statsTitle">간단 통계</div>
+                <div class="miniStats" id="miniStats">
+                  <div class="miniStats__item">
+                    <div class="miniStats__k">데이터 소스</div>
+                    <div class="miniStats__v" id="statSource">-</div>
+                  </div>
+                  <div class="miniStats__item">
+                    <div class="miniStats__k">대여소 수</div>
+                    <div class="miniStats__v" id="statCount">-</div>
+                  </div>
+                  <div class="miniStats__item">
+                    <div class="miniStats__k">인기 TOP</div>
+                    <div class="miniStats__v" id="statTop">-</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card__stats">
+                <div class="card__statsTitle">대여/반납 기간 검색</div>
+                <div class="dateRow">
+                  <input class="dateInput" id="startDate" type="date" />
+                  <span class="dateSep">~</span>
+                  <input class="dateInput" id="endDate" type="date" />
+                  <button class="dateBtn" id="applyDateBtn" type="button">적용</button>
+                </div>
+                <div class="card__sub" id="dateHint">기간을 선택하고 적용을 누르면 대여/반납 현황을 다시 불러옵니다.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="actions">
+            <button class="actionBtn actionBtn--green" id="findStationBtn" type="button">
+              대여소 찾기
+            </button>
+            <button class="actionBtn actionBtn--orange" id="findReturnBtn" type="button">
+              반납할 곳 찾기
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 설정 파일(키/백엔드 주소) -->
+    <script src="./config.js"></script>
+    <!-- 카카오맵 SDK -->
+    <script
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8c967a80793a454a0161c105e7241231&autoload=false"
+      defer
+    ></script>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
+

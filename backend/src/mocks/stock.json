@@ -1,0 +1,9 @@
+[
+  { "stationId": "SEOUL-001", "availableBike": 2, "totalRack": 10 },
+  { "stationId": "SEOUL-002", "availableBike": 18, "totalRack": 25 },
+  { "stationId": "GWANGJU-001", "availableBike": 6, "totalRack": 14 },
+  { "stationId": "DAEJEON-001", "availableBike": 1, "totalRack": 16 },
+  { "stationId": "SEJONG-001", "availableBike": 9, "totalRack": 12 },
+  { "stationId": "CHANGWON-001", "availableBike": 12, "totalRack": 15 }
+]
+

@@ -1,0 +1,19 @@
+[
+  {
+    "stationId": "SEOUL-001",
+    "rentalCount": 5420,
+    "returnCount": 5311,
+    "hourly": { "07": 120, "08": 240, "09": 310, "18": 410, "19": 350, "20": 180 }
+  },
+  {
+    "stationId": "SEOUL-002",
+    "rentalCount": 8920,
+    "returnCount": 8795,
+    "hourly": { "10": 420, "11": 510, "12": 630, "13": 590, "14": 520, "15": 410 }
+  },
+  { "stationId": "GWANGJU-001", "rentalCount": 2210, "returnCount": 2193, "hourly": { "08": 90, "17": 140, "18": 210 } },
+  { "stationId": "DAEJEON-001", "rentalCount": 1775, "returnCount": 1702, "hourly": { "07": 80, "08": 110, "18": 190 } },
+  { "stationId": "SEJONG-001", "rentalCount": 980, "returnCount": 1001, "hourly": { "09": 60, "12": 70, "18": 85 } },
+  { "stationId": "CHANGWON-001", "rentalCount": 1333, "returnCount": 1298, "hourly": { "08": 75, "18": 160, "19": 120 } }
+]
+

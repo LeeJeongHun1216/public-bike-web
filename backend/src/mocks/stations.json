@@ -1,0 +1,9 @@
+[
+  { "stationId": "SEOUL-001", "stationName": "강남역 3번 출구", "lat": 37.49795, "lng": 127.02764, "region": "서울" },
+  { "stationId": "SEOUL-002", "stationName": "여의도 한강공원", "lat": 37.52833, "lng": 126.93261, "region": "서울" },
+  { "stationId": "GWANGJU-001", "stationName": "충장로역 1번", "lat": 35.14739, "lng": 126.91555, "region": "광주" },
+  { "stationId": "DAEJEON-001", "stationName": "대전역 광장", "lat": 36.33217, "lng": 127.43432, "region": "대전" },
+  { "stationId": "SEJONG-001", "stationName": "세종시청 앞", "lat": 36.48002, "lng": 127.28908, "region": "세종" },
+  { "stationId": "CHANGWON-001", "stationName": "창원중앙역", "lat": 35.23758, "lng": 128.68111, "region": "경남 창원시" }
+]
+

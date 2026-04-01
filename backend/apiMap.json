@@ -1,0 +1,100 @@
+{
+  "서울": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": {
+      "lcgvmnInstCd": "1100000000"
+    },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": {
+      "lcgvmnInstCd": "1100000000",
+      "pageNo": 1,
+      "numOfRows": 12,
+      "type": "json"
+    },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": {
+      "lcgvmnInstCd": "1100000000"
+    }
+  },
+  "부산 기장군": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "2671000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "2671000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "2671000000" }
+  },
+  "광주": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "2900000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "2900000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "2900000000" }
+  },
+  "대전": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "3000000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "3000000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "3000000000" }
+  },
+  "세종": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "3611000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "3611000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "3611000000" }
+  },
+  "충남 공주시": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4415000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4415000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4415000000" }
+  },
+  "전남 여수시": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4613000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4613000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4613000000" }
+  },
+  "전남 순천시": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4615000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4615000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4615000000" }
+  },
+  "경북 경주시": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4713000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4713000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4713000000" }
+  },
+  "경남 창원시": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4812000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4812000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4812000000" }
+  },
+  "경남 거창군": {
+    "stationsUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010001_v2",
+    "stationsParams": { "lcgvmnInstCd": "4888000000" },
+    "stockUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010002_v2",
+    "stockParams": { "lcgvmnInstCd": "4888000000", "pageNo": 1, "numOfRows": 12, "type": "json" },
+    "usageUrl": "https://apis.data.go.kr/B551982/pbdo_v2/inf_101_00010003_v2",
+    "usageParams": { "lcgvmnInstCd": "4888000000" }
+  }
+}
+
