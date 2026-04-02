@@ -126,8 +126,8 @@ function renderMarkers() {
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
     const img = createMarkerImage({
-      color: st.congestion?.color || "#9CA3AF",
-      level: st.congestion?.level || "unknown",
+      color: st.availability?.color || st.congestion?.color || "#9CA3AF",
+      level: st.availability?.level || st.congestion?.level || "unknown",
     });
     const marker = new kakao.maps.Marker({ position: pos, image: img });
     marker.setMap(map);
@@ -145,6 +145,7 @@ function updateStatsUI() {
 }
 
 function rankingRatio(st) {
+  if (st.availability?.prob != null && Number.isFinite(st.availability.prob)) return st.availability.prob;
   if (Number(st.totalRack) > 0) return st.congestion?.ratio ?? 0;
   return fallbackRatioByAvailable(st) ?? 0;
 }
@@ -195,18 +196,18 @@ function updateCard(st) {
   els.cardTitle.textContent = st.stationName;
   els.cardSub.textContent = st.region ? st.region : "지역 정보 없음";
 
-  const hasRack = Number(st.totalRack) > 0;
   const fallbackRatio = fallbackRatioByAvailable(st);
-  const displayRatio = hasRack ? st.congestion?.ratio : fallbackRatio;
-  const displayLevel = hasRack
-    ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF" }
-    : ratioToLevel(fallbackRatio);
+  const displayRatio =
+    st.availability?.prob ??
+    (Number(st.totalRack) > 0 ? st.congestion?.ratio : fallbackRatio);
+
+  const displayLevel = ratioToLevel(displayRatio);
 
   els.cardBikes.textContent = `자전거 ${st.availableBike}대`;
   els.cardRatio.textContent = fmtPct(displayRatio);
-  els.cardCongestion.textContent = hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
+  els.cardCongestion.textContent = displayLevel.label;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
 
@@ -289,9 +290,11 @@ function pickBestStation({ user, mode }) {
     .map((s) => {
       // totalRack이 없는 지자체는 지역 내 availableBike 상대비율로 보정합니다.
       const ratio =
-        s.congestion?.level === "unknown"
-          ? (fallbackRatioByAvailable(s) ?? 0)
-          : (s.congestion?.ratio ?? 0);
+        s.availability?.prob != null && Number.isFinite(s.availability.prob)
+          ? s.availability.prob
+          : s.congestion?.level === "unknown"
+            ? (fallbackRatioByAvailable(s) ?? 0)
+            : (s.congestion?.ratio ?? 0);
       const dist = haversineKm(user, { lat: s.lat, lng: s.lng });
       const score =
         mode === "rent"

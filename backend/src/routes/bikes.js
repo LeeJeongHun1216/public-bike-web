@@ -9,6 +9,7 @@ const querySchema = z.object({
   region: z.string().optional(),
   startDate: z.string().regex(/^\d{8}$/).optional(),
   endDate: z.string().regex(/^\d{8}$/).optional(),
+  nowHour: z.coerce.number().int().min(0).max(23).optional(),
 });
 
 // GET /api/bikes?region=서울
@@ -20,8 +21,8 @@ bikesRouter.get("/", async (req, res) => {
 
   try {
     const region = parsed.data.region;
-    const { startDate, endDate } = parsed.data;
-    const data = await getIntegratedStations({ region, startDate, endDate });
+    const { startDate, endDate, nowHour } = parsed.data;
+    const data = await getIntegratedStations({ region, startDate, endDate, nowHour });
 
     res.json({
       ...data,
