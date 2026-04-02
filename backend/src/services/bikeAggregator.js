@@ -149,13 +149,15 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
     }
   };
 
-  // Promise.all을 쓰면 3개 중 하나가 타임아웃/장애가 나도 전체가 실패합니다.
-  // "가끔" 500이 뜨는 상황을 완화하기 위해 순차 + 부분 실패 허용으로 변경합니다.
-  const stationsRaw = await safeFetch("stations", () => fetchStations(client, urls));
-  const stockRaw = await safeFetch("stock", () => fetchStock(client, urls));
-  const usageRaw = await safeFetch("usage", () =>
-    fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
-  );
+  // 3개 호출을 병렬로 돌리되(slow 하나 때문에 전체가 오래 걸리는 걸 방지),
+  // 각 호출은 safeFetch로 실패해도 전체가 죽지 않게 합니다.
+  const [stationsRaw, stockRaw, usageRaw] = await Promise.all([
+    safeFetch("stations", () => fetchStations(client, urls)),
+    safeFetch("stock", () => fetchStock(client, urls)),
+    safeFetch("usage", () =>
+      fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
+    ),
+  ]);
 
   if (!urls.stockUrl) warnings.push("stockUrl(대여가능 현황정보) 미설정: availableBike/totalRack이 0으로 표시됩니다.");
   if (!urls.usageUrl) warnings.push("usageUrl(대여/반납 현황정보) 미설정: 대여/반납 통계가 0으로 표시됩니다.");
