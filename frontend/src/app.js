@@ -232,7 +232,8 @@ function updateCard(st) {
   els.cardRatio.textContent = fmtPct(displayRatio);
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
-  els.cardCongestion.textContent = hasPoisson ? displayLevel.label : hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
+  // "보정여유/보정보통/보정부족" 같은 접두어 없이 통일해서 표시
+  els.cardCongestion.textContent = displayLevel.label;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
 
