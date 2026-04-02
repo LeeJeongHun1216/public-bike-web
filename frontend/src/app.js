@@ -126,11 +126,17 @@ function renderMarkers() {
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
     const hasRack = Number(st.totalRack) > 0;
-    const fallbackRatio = fallbackRatioByAvailable(st);
-
     const displayLevel = hasRack
-      ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF", level: st.congestion?.level || "unknown" }
-      : ratioToLevel(fallbackRatio);
+      ? {
+          label: st.congestion?.label || "정보없음",
+          color: st.congestion?.color || "#9CA3AF",
+          level: st.congestion?.level || "unknown",
+        }
+      : {
+          label: st.congestion?.label || "정보없음",
+          color: st.congestion?.color || "#9CA3AF",
+          level: st.congestion?.level || "unknown",
+        };
 
     const img = createMarkerImage({
       color: displayLevel.color || "#9CA3AF",
