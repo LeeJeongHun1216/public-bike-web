@@ -126,11 +126,18 @@ function renderMarkers() {
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
 
+    const hasPoisson =
+      st.availability?.prob != null && Number.isFinite(Number(st.availability.prob));
     const hasRack = Number(st.totalRack) > 0;
+
     let color = "#9CA3AF";
     let level = "unknown";
 
-    if (hasRack) {
+    if (hasPoisson) {
+      // Poisson(시간대별 이벤트) 기반 확률 레벨
+      color = st.availability?.color || "#9CA3AF";
+      level = st.availability?.level || "unknown";
+    } else if (hasRack) {
       // 혼잡도는 (availableBike / totalRack) 기준
       color = st.congestion?.color || "#9CA3AF";
       level = st.congestion?.level || "unknown";
@@ -145,7 +152,6 @@ function renderMarkers() {
     }
 
     // Kakao 마커 SVG 내부 텍스트(!, 🚲) 용도로만 level이 필요합니다.
-    // color가 회색이면 level은 임의로 !를 주는게 자연스럽습니다.
     if (level === "unknown") level = "mid";
 
     const img = createMarkerImage({ color, level });
@@ -165,6 +171,7 @@ function updateStatsUI() {
 }
 
 function rankingRatio(st) {
+  if (st.availability?.prob != null && Number.isFinite(Number(st.availability.prob))) return st.availability.prob;
   if (Number(st.totalRack) > 0) return st.congestion?.ratio ?? 0;
   return fallbackRatioByAvailable(st) ?? 0;
 }
@@ -215,18 +222,24 @@ function updateCard(st) {
   els.cardTitle.textContent = st.stationName;
   els.cardSub.textContent = st.region ? st.region : "지역 정보 없음";
 
+  const hasPoisson =
+    st.availability?.prob != null && Number.isFinite(Number(st.availability.prob));
   const hasRack = Number(st.totalRack) > 0;
   const fallbackRatio = fallbackRatioByAvailable(st);
-  const displayRatio = hasRack ? st.congestion?.ratio : fallbackRatio;
-  const displayLevel = hasRack
-    ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF" }
-    : ratioToLevel(fallbackRatio);
+
+  const displayRatio = hasPoisson
+    ? st.availability?.prob
+    : hasRack
+      ? st.congestion?.ratio
+      : fallbackRatio;
+
+  const displayLevel = ratioToLevel(displayRatio);
 
   els.cardBikes.textContent = `자전거 ${st.availableBike}대`;
   els.cardRatio.textContent = fmtPct(displayRatio);
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
-  els.cardCongestion.textContent = hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
+  els.cardCongestion.textContent = hasPoisson ? displayLevel.label : hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
 

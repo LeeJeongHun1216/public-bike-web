@@ -7,6 +7,7 @@ import { normalizeStationRow, normalizeStockRow, normalizeUsageRow } from "../li
 import { calcCongestion } from "../lib/ratio.js";
 import { REGIONS } from "../regions.js";
 import { resolveRegionUrls } from "./apiMap.js";
+import { calcRentalAvailabilityPoisson } from "../lib/poissonAvailability.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,10 +85,32 @@ function buildUsageDateParams({ startDate, endDate }) {
   return { [startKey]: startDate, [endKey]: endDate };
 }
 
-export async function getIntegratedStations({ region, startDate, endDate }) {
+export async function getIntegratedStations({ region, startDate, endDate, nowHour }) {
   const client = createClient();
   const urls = await resolveRegionUrls(region);
   const usageDateParams = buildUsageDateParams({ startDate, endDate });
+
+  const parseYmdToUtc = (ymd) => {
+    if (!ymd || typeof ymd !== "string" || !/^\d{8}$/.test(ymd)) return null;
+    const y = Number(ymd.slice(0, 4));
+    const m = Number(ymd.slice(4, 6));
+    const d = Number(ymd.slice(6, 8));
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return Number.isFinite(dt.getTime()) ? dt : null;
+  };
+
+  const countInclusiveDays = (s, e) => {
+    const ds = parseYmdToUtc(s);
+    const de = parseYmdToUtc(e);
+    if (!ds || !de) return 1;
+    const diff = de.getTime() - ds.getTime();
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000)) + 1;
+    return Number.isFinite(days) && days > 0 ? days : 1;
+  };
+
+  const days = countInclusiveDays(startDate, endDate);
+  const nowHourNum = nowHour == null ? null : Number(nowHour);
 
   const [stationsRaw, stockRaw, usageRaw] = await Promise.all([
     fetchStations(client, urls),
@@ -121,6 +144,15 @@ export async function getIntegratedStations({ region, startDate, endDate }) {
     const returnCount = u?.returnCount ?? 0;
     const congestion = calcCongestion(availableBike, totalRack);
 
+    const availability = calcRentalAvailabilityPoisson({
+      availableBike,
+      rentalCount,
+      returnCount,
+      hourly: u?.hourly ?? null,
+      nowHour: nowHourNum,
+      days,
+    });
+
     return {
       stationId: st.stationId,
       stationName: st.stationName,
@@ -133,6 +165,7 @@ export async function getIntegratedStations({ region, startDate, endDate }) {
       returnCount,
       hourly: u?.hourly ?? null,
       congestion,
+      availability,
     };
   });
 

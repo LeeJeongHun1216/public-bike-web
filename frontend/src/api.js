@@ -6,6 +6,10 @@ export async function fetchBikes({ region }) {
   if (window.APP_STATE?.startDate) url.searchParams.set("startDate", window.APP_STATE.startDate);
   if (window.APP_STATE?.endDate) url.searchParams.set("endDate", window.APP_STATE.endDate);
 
+  // 대여 가능 확률(포아송) 시간대별 계산을 위해 현재 로컬 시각 HH를 전달
+  const nowHour = new Date().getHours(); // 0~23
+  url.searchParams.set("nowHour", String(nowHour));
+
   const res = await fetch(url.toString());
   if (!res.ok) {
     const text = await res.text().catch(() => "");
