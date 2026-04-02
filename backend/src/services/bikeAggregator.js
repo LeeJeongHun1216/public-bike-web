@@ -22,8 +22,8 @@ async function fetchAllPages(client, { url, extraParams }) {
   // 페이지당 응답량이 너무 커서 타임아웃이 나는 경우가 있어 numOfRows를 낮춥니다.
   // (5000은 INVALID 케이스가 있어 안전하게 500 이하로 유지)
   const numOfRows = 500;
-  const maxPages = 20; // 안전장치 (1000*20=20000)
-  const maxRetries = 1; // timeout/네트워크 transient 오류 1회 재시도
+  const maxPages = 10; // 안전장치: 처리시간을 렌더 게이트웨이 제한(대략 30초) 안으로 맞추기
+  const maxRetries = 0; // timeout/네트워크 transient 오류는 안전한 부분 실패 처리(safeFetch)로 대응
 
   const out = [];
 
