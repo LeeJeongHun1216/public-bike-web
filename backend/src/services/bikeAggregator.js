@@ -19,7 +19,9 @@ async function readMockJson(fileName) {
 }
 
 async function fetchAllPages(client, { url, extraParams }) {
-  const numOfRows = 1000; // 이 데이터셋은 5000이 INVALID가 나서 1000으로 안전하게 고정
+  // 페이지당 응답량이 너무 커서 타임아웃이 나는 경우가 있어 numOfRows를 낮춥니다.
+  // (5000은 INVALID 케이스가 있어 안전하게 500 이하로 유지)
+  const numOfRows = 500;
   const maxPages = 20; // 안전장치 (1000*20=20000)
   const maxRetries = 1; // timeout/네트워크 transient 오류 1회 재시도
 
@@ -133,13 +135,28 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
   const days = countInclusiveDays(startDate, endDate);
   const nowHourNum = nowHour == null ? null : Number(nowHour);
 
-  const [stationsRaw, stockRaw, usageRaw] = await Promise.all([
-    fetchStations(client, urls),
-    fetchStock(client, urls),
-    fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
-  ]);
-
   const warnings = [];
+
+  const safeFetch = async (label, fn) => {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.warn(`[bikeAggregator] ${label} fetch failed: ${msg}`);
+      warnings.push(`${label} fetch failed: ${msg}`);
+      return [];
+    }
+  };
+
+  // Promise.all을 쓰면 3개 중 하나가 타임아웃/장애가 나도 전체가 실패합니다.
+  // "가끔" 500이 뜨는 상황을 완화하기 위해 순차 + 부분 실패 허용으로 변경합니다.
+  const stationsRaw = await safeFetch("stations", () => fetchStations(client, urls));
+  const stockRaw = await safeFetch("stock", () => fetchStock(client, urls));
+  const usageRaw = await safeFetch("usage", () =>
+    fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
+  );
+
   if (!urls.stockUrl) warnings.push("stockUrl(대여가능 현황정보) 미설정: availableBike/totalRack이 0으로 표시됩니다.");
   if (!urls.usageUrl) warnings.push("usageUrl(대여/반납 현황정보) 미설정: 대여/반납 통계가 0으로 표시됩니다.");
   if (urls.usageUrl && (!startDate || !endDate)) {
