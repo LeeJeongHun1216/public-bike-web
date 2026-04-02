@@ -21,12 +21,33 @@ async function readMockJson(fileName) {
 async function fetchAllPages(client, { url, extraParams }) {
   const numOfRows = 1000; // 이 데이터셋은 5000이 INVALID가 나서 1000으로 안전하게 고정
   const maxPages = 20; // 안전장치 (1000*20=20000)
+  const maxRetries = 1; // timeout/네트워크 transient 오류 1회 재시도
 
   const out = [];
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const isTimeoutLike = (err) =>
+    err?.code === "ECONNABORTED" ||
+    err?.message?.toLowerCase?.().includes("timeout") ||
+    err?.message?.toLowerCase?.().includes("timed out");
+
   for (let pageNo = 1; pageNo <= maxPages; pageNo += 1) {
-    const res = await client.get(url, {
-      params: withServiceKey({ pageNo, numOfRows, type: "json", ...(extraParams || {}) }),
-    });
+    let res = null;
+    // 특정 페이지가 느리게 응답하는 경우가 있어, timeout일 때만 1회 재시도합니다.
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      try {
+        res = await client.get(url, {
+          params: withServiceKey({ pageNo, numOfRows, type: "json", ...(extraParams || {}) }),
+        });
+        break;
+      } catch (err) {
+        if (attempt >= maxRetries || !isTimeoutLike(err)) throw err;
+        const backoffMs = 500 * (attempt + 1);
+        // eslint-disable-next-line no-console
+        console.warn(`OpenAPI timeout detected. Retrying (pageNo=${pageNo}, attempt=${attempt + 1})...`);
+        await sleep(backoffMs);
+      }
+    }
     const rows = extractRows(res);
     const totalCount = extractTotalCount(res);
 
