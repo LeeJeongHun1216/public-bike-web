@@ -21,7 +21,7 @@ async function readMockJson(fileName) {
 async function fetchAllPages(client, { url, extraParams }) {
   // 페이지당 응답량이 너무 커서 타임아웃이 나는 경우가 있어 numOfRows를 낮춥니다.
   // (5000은 INVALID 케이스가 있어 안전하게 500 이하로 유지)
-  const numOfRows = 500;
+  const numOfRows = 200;
   // Render 게이트웨이 제한을 피하려면 요청 시간을 극도로 줄여야 합니다.
   // 우선은 첫 페이지 1회만 받아 화면이 "살아있게" 만듭니다.
   const maxPages = 1;
