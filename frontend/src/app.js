@@ -424,6 +424,11 @@ async function bootstrap() {
   const init = await fetchBikes({ region: DEFAULT_REGION });
   appState.regions = init.regions || [];
   appState.stations = init.stations || [];
+  // 초기 접속에서도 '보정(대여가능확률)' 계산이 즉시 나오도록 maxAvailableBike 계산
+  appState.maxAvailableBike = appState.stations.reduce(
+    (m, s) => Math.max(m, Number(s.availableBike) || 0),
+    0,
+  );
   appState.stats = init.stats || null;
   appState.source = init.source || "-";
 
