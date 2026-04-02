@@ -125,19 +125,12 @@ function renderMarkers() {
     if (st.lat == null || st.lng == null) continue;
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
-
-    const hasPoisson =
-      st.availability?.prob != null && Number.isFinite(Number(st.availability.prob));
     const hasRack = Number(st.totalRack) > 0;
 
     let color = "#9CA3AF";
     let level = "unknown";
 
-    if (hasPoisson) {
-      // Poisson(시간대별 이벤트) 기반 확률 레벨
-      color = st.availability?.color || "#9CA3AF";
-      level = st.availability?.level || "unknown";
-    } else if (hasRack) {
+    if (hasRack) {
       // 혼잡도는 (availableBike / totalRack) 기준
       color = st.congestion?.color || "#9CA3AF";
       level = st.congestion?.level || "unknown";
