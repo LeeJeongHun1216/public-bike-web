@@ -125,10 +125,28 @@ function renderMarkers() {
     if (st.lat == null || st.lng == null) continue;
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
-    const img = createMarkerImage({
-      color: st.availability?.color || st.congestion?.color || "#9CA3AF",
-      level: st.availability?.level || st.congestion?.level || "unknown",
-    });
+
+    // 1) Poisson availability(가능하면) 우선
+    // 2) 없으면 거치대/혼잡 정보가 없을 수 있으니 지역 내 보정비율로 색을 결정
+    let color = "#9CA3AF";
+    let level = "unknown";
+
+    if (st.availability?.prob != null && Number.isFinite(st.availability.prob)) {
+      color = st.availability?.color || "#9CA3AF";
+      level = st.availability?.level || "unknown";
+    } else if (Number(st.totalRack) > 0 && st.congestion?.color) {
+      color = st.congestion.color || "#9CA3AF";
+      level = st.congestion.level || "unknown";
+    } else {
+      const fallbackRatio = fallbackRatioByAvailable(st);
+      if (fallbackRatio != null && Number.isFinite(fallbackRatio)) {
+        const lvl = fallbackRatio < 0.3 ? "low" : fallbackRatio < 0.7 ? "mid" : "high";
+        color = ratioToLevel(fallbackRatio).color;
+        level = lvl;
+      }
+    }
+
+    const img = createMarkerImage({ color, level });
     const marker = new kakao.maps.Marker({ position: pos, image: img });
     marker.setMap(map);
 
