@@ -146,6 +146,7 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
       const msg = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line no-console
       console.warn(`[bikeAggregator] ${label} fetch failed: ${msg}`);
+
       warnings.push(`${label} fetch failed: ${msg}`);
       return [];
     }
