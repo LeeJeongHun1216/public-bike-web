@@ -9,9 +9,7 @@ import axios from "axios";
 
 export function createClient() {
   return axios.create({
-    // 공공데이터(OpenAPI) 호출 중 특정 페이지가 느리게 응답하는 경우가 있어
-    // 타임아웃을 늘려 일시적 지연에 대한 실패 확률을 줄입니다.
-    timeout: 20000,
+    timeout: 15000,
     headers: { "User-Agent": "bike-integrator/1.0" },
   });
 }

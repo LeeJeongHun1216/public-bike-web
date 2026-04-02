@@ -19,39 +19,14 @@ async function readMockJson(fileName) {
 }
 
 async function fetchAllPages(client, { url, extraParams }) {
-  // 페이지당 응답량이 너무 커서 타임아웃이 나는 경우가 있어 numOfRows를 낮춥니다.
-  // (5000은 INVALID 케이스가 있어 안전하게 500 이하로 유지)
-  const numOfRows = 200;
-  // Render 게이트웨이 제한을 피하려면 요청 시간을 극도로 줄여야 합니다.
-  // 우선은 첫 페이지 1회만 받아 화면이 "살아있게" 만듭니다.
-  const maxPages = 1;
-  const maxRetries = 0; // timeout/네트워크 transient 오류는 안전한 부분 실패 처리(safeFetch)로 대응
+  const numOfRows = 1000; // 이 데이터셋은 5000이 INVALID가 나서 1000으로 안전하게 고정
+  const maxPages = 20; // 안전장치 (1000*20=20000)
 
   const out = [];
-
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const isTimeoutLike = (err) =>
-    err?.code === "ECONNABORTED" ||
-    err?.message?.toLowerCase?.().includes("timeout") ||
-    err?.message?.toLowerCase?.().includes("timed out");
-
   for (let pageNo = 1; pageNo <= maxPages; pageNo += 1) {
-    let res = null;
-    // 특정 페이지가 느리게 응답하는 경우가 있어, timeout일 때만 1회 재시도합니다.
-    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-      try {
-        res = await client.get(url, {
-          params: withServiceKey({ pageNo, numOfRows, type: "json", ...(extraParams || {}) }),
-        });
-        break;
-      } catch (err) {
-        if (attempt >= maxRetries || !isTimeoutLike(err)) throw err;
-        const backoffMs = 500 * (attempt + 1);
-        // eslint-disable-next-line no-console
-        console.warn(`OpenAPI timeout detected. Retrying (pageNo=${pageNo}, attempt=${attempt + 1})...`);
-        await sleep(backoffMs);
-      }
-    }
+    const res = await client.get(url, {
+      params: withServiceKey({ pageNo, numOfRows, type: "json", ...(extraParams || {}) }),
+    });
     const rows = extractRows(res);
     const totalCount = extractTotalCount(res);
 
@@ -137,31 +112,13 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
   const days = countInclusiveDays(startDate, endDate);
   const nowHourNum = nowHour == null ? null : Number(nowHour);
 
-  const warnings = [];
-
-  const safeFetch = async (label, fn) => {
-    try {
-      return await fn();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      // eslint-disable-next-line no-console
-      console.warn(`[bikeAggregator] ${label} fetch failed: ${msg}`);
-
-      warnings.push(`${label} fetch failed: ${msg}`);
-      return [];
-    }
-  };
-
-  // 3개 호출을 병렬로 돌리되(slow 하나 때문에 전체가 오래 걸리는 걸 방지),
-  // 각 호출은 safeFetch로 실패해도 전체가 죽지 않게 합니다.
   const [stationsRaw, stockRaw, usageRaw] = await Promise.all([
-    safeFetch("stations", () => fetchStations(client, urls)),
-    safeFetch("stock", () => fetchStock(client, urls)),
-    safeFetch("usage", () =>
-      fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
-    ),
+    fetchStations(client, urls),
+    fetchStock(client, urls),
+    fetchUsage(client, { ...urls, usageParams: { ...(urls.usageParams || {}), ...usageDateParams } }),
   ]);
 
+  const warnings = [];
   if (!urls.stockUrl) warnings.push("stockUrl(대여가능 현황정보) 미설정: availableBike/totalRack이 0으로 표시됩니다.");
   if (!urls.usageUrl) warnings.push("usageUrl(대여/반납 현황정보) 미설정: 대여/반납 통계가 0으로 표시됩니다.");
   if (urls.usageUrl && (!startDate || !endDate)) {
