@@ -125,28 +125,17 @@ function renderMarkers() {
     if (st.lat == null || st.lng == null) continue;
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
+    const hasRack = Number(st.totalRack) > 0;
+    const fallbackRatio = fallbackRatioByAvailable(st);
 
-    // 1) Poisson availability(가능하면) 우선
-    // 2) 없으면 거치대/혼잡 정보가 없을 수 있으니 지역 내 보정비율로 색을 결정
-    let color = "#9CA3AF";
-    let level = "unknown";
+    const displayLevel = hasRack
+      ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF", level: st.congestion?.level || "unknown" }
+      : ratioToLevel(fallbackRatio);
 
-    if (st.availability?.prob != null && Number.isFinite(st.availability.prob)) {
-      color = st.availability?.color || "#9CA3AF";
-      level = st.availability?.level || "unknown";
-    } else if (Number(st.totalRack) > 0 && st.congestion?.color) {
-      color = st.congestion.color || "#9CA3AF";
-      level = st.congestion.level || "unknown";
-    } else {
-      const fallbackRatio = fallbackRatioByAvailable(st);
-      if (fallbackRatio != null && Number.isFinite(fallbackRatio)) {
-        const lvl = fallbackRatio < 0.3 ? "low" : fallbackRatio < 0.7 ? "mid" : "high";
-        color = ratioToLevel(fallbackRatio).color;
-        level = lvl;
-      }
-    }
-
-    const img = createMarkerImage({ color, level });
+    const img = createMarkerImage({
+      color: displayLevel.color || "#9CA3AF",
+      level: displayLevel.level || (displayLevel.label === "부족" ? "low" : displayLevel.label === "보통" ? "mid" : "high"),
+    });
     const marker = new kakao.maps.Marker({ position: pos, image: img });
     marker.setMap(map);
 
@@ -163,7 +152,6 @@ function updateStatsUI() {
 }
 
 function rankingRatio(st) {
-  if (st.availability?.prob != null && Number.isFinite(st.availability.prob)) return st.availability.prob;
   if (Number(st.totalRack) > 0) return st.congestion?.ratio ?? 0;
   return fallbackRatioByAvailable(st) ?? 0;
 }
@@ -214,18 +202,18 @@ function updateCard(st) {
   els.cardTitle.textContent = st.stationName;
   els.cardSub.textContent = st.region ? st.region : "지역 정보 없음";
 
+  const hasRack = Number(st.totalRack) > 0;
   const fallbackRatio = fallbackRatioByAvailable(st);
-  const displayRatio =
-    st.availability?.prob ??
-    (Number(st.totalRack) > 0 ? st.congestion?.ratio : fallbackRatio);
-
-  const displayLevel = ratioToLevel(displayRatio);
+  const displayRatio = hasRack ? st.congestion?.ratio : fallbackRatio;
+  const displayLevel = hasRack
+    ? { label: st.congestion?.label || "정보없음", color: st.congestion?.color || "#9CA3AF" }
+    : ratioToLevel(fallbackRatio);
 
   els.cardBikes.textContent = `자전거 ${st.availableBike}대`;
   els.cardRatio.textContent = fmtPct(displayRatio);
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
-  els.cardCongestion.textContent = displayLevel.label;
+  els.cardCongestion.textContent = hasRack ? displayLevel.label : `보정 ${displayLevel.label}`;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
 
@@ -308,11 +296,7 @@ function pickBestStation({ user, mode }) {
     .map((s) => {
       // totalRack이 없는 지자체는 지역 내 availableBike 상대비율로 보정합니다.
       const ratio =
-        s.availability?.prob != null && Number.isFinite(s.availability.prob)
-          ? s.availability.prob
-          : s.congestion?.level === "unknown"
-            ? (fallbackRatioByAvailable(s) ?? 0)
-            : (s.congestion?.ratio ?? 0);
+        s.congestion?.level === "unknown" ? (fallbackRatioByAvailable(s) ?? 0) : (s.congestion?.ratio ?? 0);
       const dist = haversineKm(user, { lat: s.lat, lng: s.lng });
       const score =
         mode === "rent"
