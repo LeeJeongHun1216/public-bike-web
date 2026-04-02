@@ -13,7 +13,8 @@ function svgMarker(color, label) {
 }
 
 export function createMarkerImage({ color, level }) {
-  const label = level === "low" ? "!" : level === "mid" ? "!" : "🚲";
+  // 빨강/주황/초록 모두 내부에 자전거 아이콘을 표시합니다.
+  const label = "🚲";
   const url = svgMarker(color, label);
   const size = new kakao.maps.Size(38, 42);
   const offset = new kakao.maps.Point(19, 39);
