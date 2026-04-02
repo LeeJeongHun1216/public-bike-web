@@ -16,7 +16,7 @@ export function calcCongestion(availableBike, totalRack) {
   const ratio = clamp(a / t, 0, 1);
 
   if (ratio < 0.3) return { ratio, level: "low", label: "부족", color: "#EF4444" };
-  if (ratio < 0.7) return { ratio, level: "mid", label: "보통", color: "#F59E0B" };
+  if (ratio < 0.7) return { ratio, level: "mid", label: "보통", color: "#F97316" };
   return { ratio, level: "high", label: "여유", color: "#22C55E" };
 }
 

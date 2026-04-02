@@ -6,10 +6,6 @@ export async function fetchBikes({ region }) {
   if (window.APP_STATE?.startDate) url.searchParams.set("startDate", window.APP_STATE.startDate);
   if (window.APP_STATE?.endDate) url.searchParams.set("endDate", window.APP_STATE.endDate);
 
-  // 현재 시각 기준(사용자 로컬 시간) + 시간대별 확률 계산을 위해 nowHour를 함께 전달
-  const nowHour = new Date().getHours(); // 0~23 (local)
-  url.searchParams.set("nowHour", String(nowHour));
-
   const res = await fetch(url.toString());
   if (!res.ok) {
     const text = await res.text().catch(() => "");
