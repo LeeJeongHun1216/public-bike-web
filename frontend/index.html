@@ -10,13 +10,26 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("bikeMapTheme") === "dark") document.documentElement.dataset.theme = "dark";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div class="app">
       <header class="topbar">
-        <div class="brand">
-          <div class="brand__icon" aria-hidden="true">🚲</div>
-          <div class="brand__title">전국 공영자전거 통합 정보 웹서비스</div>
+        <div class="topbar__inner">
+          <div class="topbar__spacer" aria-hidden="true"></div>
+          <div class="brand">
+            <div class="brand__icon" aria-hidden="true">🚲</div>
+            <div class="brand__title">전국 공영자전거 통합 정보</div>
+          </div>
+          <button class="themeToggle" id="themeToggleBtn" type="button" aria-label="다크 모드로 전환">
+            <span class="themeToggle__icon" aria-hidden="true">🌙</span>
+          </button>
         </div>
 
         <nav class="tabs" id="regionTabs" aria-label="지역 탭"></nav>

@@ -2,7 +2,10 @@ import { fetchBikes } from "./api.js";
 import { loadFavorites, toggleFavorite, isFavorite } from "./storage.js";
 import { ensureKakaoLoaded, createMap, panTo, createMarkerImage } from "./map.js";
 
+const THEME_KEY = "bikeMapTheme";
+
 const els = {
+  themeToggleBtn: document.getElementById("themeToggleBtn"),
   regionTabs: document.getElementById("regionTabs"),
   favList: document.getElementById("favList"),
   favEmpty: document.getElementById("favEmpty"),
@@ -47,6 +50,39 @@ let appState = {
 
 let map = null;
 let markers = [];
+
+function getStoredTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function applyTheme(theme) {
+  const isDark = theme === "dark";
+  document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  try {
+    localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
+  } catch {
+    /* ignore */
+  }
+  const icon = els.themeToggleBtn?.querySelector(".themeToggle__icon");
+  if (els.themeToggleBtn) {
+    els.themeToggleBtn.setAttribute(
+      "aria-label",
+      isDark ? "라이트 모드로 전환" : "다크 모드로 전환",
+    );
+  }
+  if (icon) icon.textContent = isDark ? "☀️" : "🌙";
+}
+
+function initTheme() {
+  applyTheme(getStoredTheme());
+  els.themeToggleBtn?.addEventListener("click", () => {
+    applyTheme(getStoredTheme() === "dark" ? "light" : "dark");
+  });
+}
 
 function fmtPct(ratio) {
   if (ratio == null || !Number.isFinite(Number(ratio))) return "-";
@@ -440,6 +476,7 @@ function wireEvents() {
 }
 
 async function bootstrap() {
+  initTheme();
   await ensureKakaoLoaded();
 
   // 초기 지도 생성: 서울 중심(탭 클릭 시 이동)
