@@ -164,26 +164,19 @@ function renderMarkers() {
     const hasRack = Number(st.totalRack) > 0;
 
     let color = "#9CA3AF";
-    let level = "unknown";
 
     if (hasRack) {
       // 혼잡도는 (availableBike / totalRack) 기준
       color = st.congestion?.color || "#9CA3AF";
-      level = st.congestion?.level || "unknown";
     } else {
       // 거치대 정보가 없는 지자체는 해당 지역 max 기준으로 보정
       const fallbackRatio = fallbackRatioByAvailable(st);
       if (fallbackRatio != null && Number.isFinite(fallbackRatio)) {
-        const mapped = ratioToLevel(fallbackRatio);
-        color = mapped.color;
-        level = fallbackRatio < 0.3 ? "low" : fallbackRatio < 0.7 ? "mid" : "high";
+        color = ratioToLevel(fallbackRatio).color;
       }
     }
 
-    // Kakao 마커 SVG 내부 텍스트(!, 🚲) 용도로만 level이 필요합니다.
-    if (level === "unknown") level = "mid";
-
-    const img = createMarkerImage({ color, level });
+    const img = createMarkerImage({ color });
     const marker = new kakao.maps.Marker({ position: pos, image: img });
     marker.setMap(map);
 

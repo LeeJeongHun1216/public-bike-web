@@ -12,7 +12,7 @@ function svgMarker(color, label) {
   return `data:image/svg+xml;charset=UTF-8,${svg}`;
 }
 
-export function createMarkerImage({ color, level }) {
+export function createMarkerImage({ color }) {
   // 빨강/주황/초록 모두 내부에 자전거 아이콘을 표시합니다.
   const label = "🚲";
   const url = svgMarker(color, label);
