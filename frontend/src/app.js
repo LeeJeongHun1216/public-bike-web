@@ -443,6 +443,10 @@ function wireEvents() {
   });
 
   els.applyDateBtn?.addEventListener("click", async () => {
+    // 기간 적용으로 데이터가 다시 로딩되면 카드가 초기화되므로,
+    // 기존에 선택된 대여소가 있으면 동일 ID의 대여소를 찾아 카드만 복원한다.
+    const prevSelectedStationId = appState.selectedStationId;
+
     // HTML date input: YYYY-MM-DD → API: YYYYMMDD
     const toYmd = (v) => (v ? v.replaceAll("-", "") : "");
     const s = toYmd(els.startDate?.value || "");
@@ -462,6 +466,10 @@ function wireEvents() {
 
     try {
       await loadRegion(appState.currentRegion);
+      if (prevSelectedStationId) {
+        const st = appState.stations.find((x) => x.stationId === prevSelectedStationId);
+        if (st) selectStation(prevSelectedStationId, { pan: false });
+      }
     } catch (err) {
       alert(String(err?.message || err));
     }
