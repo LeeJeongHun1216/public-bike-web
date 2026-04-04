@@ -36,6 +36,9 @@ const els = {
 
 const DEFAULT_REGION = "서울";
 
+/** 대여소 상세에서 값이 없을 때 통일 문구 */
+const DETAIL_EMPTY = "정보 없음";
+
 /** 백엔드 stationDetail 키와 동일 순서(공공데이터 대여소 정보) */
 const STATION_DETAIL_FIELDS = [
   { key: "operBgngHrCn", label: "운영 시작" },
@@ -52,16 +55,49 @@ const STATION_DETAIL_FIELDS = [
 ];
 
 const STATION_DETAIL_TIME_KEYS = new Set(["operBgngHrCn", "operEndHrCn"]);
+const STATION_DETAIL_DATE_KEYS = new Set(["bcyclDataCrtrYmd"]);
 const STATION_DETAIL_OX_KEYS = new Set(["rpfactInstlYn", "arinjcInstlYn"]);
 
-/** 공공데이터 HHMMSS(또는 숫자) → 오전/오후 + 시(2자리) */
-function formatOperHour(raw) {
-  if (raw == null || raw === "") return "-";
+/** YYYYMMDD 등 → YYYY-MM-DD */
+function formatDataBasisYmd(raw) {
+  if (raw == null || String(raw).trim() === "") return DETAIL_EMPTY;
   const digits = String(raw).replace(/\D/g, "");
-  if (!digits.length) return String(raw).trim() || "-";
-  const padded = digits.padStart(6, "0").slice(0, 6);
-  const h24 = Number(padded.slice(0, 2));
-  if (!Number.isFinite(h24) || h24 > 23) return String(raw).trim();
+  if (digits.length >= 8) {
+    const y = digits.slice(0, 4);
+    const mo = digits.slice(4, 6);
+    const da = digits.slice(6, 8);
+    return `${y}-${mo}-${da}`;
+  }
+  const t = String(raw).trim();
+  return t || DETAIL_EMPTY;
+}
+
+/**
+ * 공공데이터 HHMMSS(6자리) → 오전/오후 + 시·분(각 2자리)
+ * - 24시(자정/일일 종료 표기)는 오후 12시 MM분으로 표시 (예: 245900 → 오후 12시 59분)
+ * - 25시 등은 24로 나눈 나머지로 보정
+ */
+function formatOperHour(raw) {
+  if (raw == null || String(raw).trim() === "") return DETAIL_EMPTY;
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits.length) return String(raw).trim() || DETAIL_EMPTY;
+
+  const padded = digits.padStart(6, "0");
+  const chunk = padded.length > 6 ? padded.slice(-6) : padded;
+
+  let h24 = Number(chunk.slice(0, 2));
+  let mm = Number(chunk.slice(2, 4));
+  if (!Number.isFinite(h24)) return String(raw).trim() || DETAIL_EMPTY;
+  if (!Number.isFinite(mm) || mm < 0 || mm > 59) mm = 0;
+
+  if (h24 > 24) {
+    h24 %= 24;
+  }
+
+  if (h24 === 24) {
+    const mStr = String(mm).padStart(2, "0");
+    return `오후 12시 ${mStr}분`;
+  }
 
   let period;
   let hour12;
@@ -79,15 +115,16 @@ function formatOperHour(raw) {
     hour12 = h24 - 12;
   }
   const hh = String(hour12).padStart(2, "0");
-  return `${period} ${hh}시`;
+  const mStr = String(mm).padStart(2, "0");
+  return `${period} ${hh}시 ${mStr}분`;
 }
 
 function formatInstallOX(v) {
-  if (v == null || String(v).trim() === "") return "-";
+  if (v == null || String(v).trim() === "") return DETAIL_EMPTY;
   const u = String(v).trim().toUpperCase();
   if (u === "Y" || u === "1" || u === "O" || u === "YES" || u === "예") return "O";
   if (u === "N" || u === "0" || u === "X" || u === "NO" || u === "아니오") return "X";
-  return "-";
+  return DETAIL_EMPTY;
 }
 
 function renderStationDetail(detail) {
@@ -104,11 +141,12 @@ function renderStationDetail(detail) {
   for (const { key, label } of STATION_DETAIL_FIELDS) {
     const raw = d[key];
     const empty = raw == null || String(raw).trim() === "";
-    let display = "-";
+    let display = DETAIL_EMPTY;
     if (!empty) {
       if (STATION_DETAIL_TIME_KEYS.has(key)) display = formatOperHour(raw);
+      else if (STATION_DETAIL_DATE_KEYS.has(key)) display = formatDataBasisYmd(raw);
       else if (STATION_DETAIL_OX_KEYS.has(key)) display = formatInstallOX(raw);
-      else display = String(raw).trim();
+      else display = String(raw).trim() || DETAIL_EMPTY;
     }
     parts.push(
       `<div class="detailRow"><span class="detailRow__k">${escapeHtml(label)}</span><span class="detailRow__v">${escapeHtml(display)}</span></div>`,
