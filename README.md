@@ -18,10 +18,26 @@
 │   ├── config.js           # 백엔드 베이스 URL(APP_CONFIG)
 │   ├── styles.css
 │   └── src/
-│       ├── app.js          # UI·지도·탭·기간 적용
-│       ├── api.js          # /api/bikes 호출, nowHour·날짜 쿼리
-│       ├── map.js          # 마커·맵 유틸
-│       └── storage.js      # 즐겨찾기
+│       ├── app.js              # 진입점
+│       ├── bootstrap.js        # 초기화 순서
+│       ├── appState.js         # 상태·APP_STATE
+│       ├── elements.js         # DOM 참조
+│       ├── mapRuntime.js       # 지도·마커 인스턴스
+│       ├── api.js              # /api/bikes
+│       ├── map.js              # 카카오 유틸
+│       ├── storage.js          # 즐겨찾기
+│       ├── congestion.js       # 혼잡도·% 표시
+│       ├── stationDetailView.js
+│       ├── stationCard.js
+│       ├── stationSelection.js
+│       ├── mapMarkers.js
+│       ├── favoritesView.js
+│       ├── rankingView.js
+│       ├── regionData.js       # 탭·loadRegion
+│       ├── recommend.js        # 검색·위치 추천
+│       ├── events.js
+│       ├── theme.js
+│       └── initialOverlay.js
 ├── backend/
 │   ├── apiMap.json         # 지역별 URL(없으면 .env 공통 URL)
 │   ├── apiMap.example.json
@@ -33,7 +49,25 @@
 │       ├── services/       # bikeAggregator, apiMap
 │       ├── lib/            # dataGoKr, normalize, ratio, poissonAvailability
 │       └── mocks/          # USE_MOCK=true 일 때
+│   └── test/
+│       └── normalize.test.js   # 필드 정규화 단위 테스트
 └── README.md
+```
+
+### 유지보수: 프론트 모듈 역할
+
+- **`elements.js`**: 마크업 `id` 변경 시 이 파일만 수정하면 됩니다.
+- **`regionData.js`**: 지역 전환·기간 적용 후 `fetchBikes` → 목록/마커 갱신 흐름.
+- **`stationCard.js` / `stationSelection.js`**: 우측 카드와 선택 상태; 기간 적용 시 로딩 문구도 여기서 처리.
+- **`normalize.js`(백엔드)**: 공공 API 필드 별칭 추가 시 이쪽을 먼저 봅니다.
+
+### 백엔드 테스트
+
+OpenAPI 필드 매핑이 깨지지 않도록 `normalize`에 대한 단위 테스트가 있습니다.
+
+```bash
+cd backend
+npm test
 ```
 
 ---
@@ -90,6 +124,27 @@ npx --yes serve -l 5500
 | `nowHour` | `0`–`23` — 포아송 기반 대여 가능 확률 계산용(프론트가 로컬 시각으로 전달) |
 
 응답에 `regions`(탭용 메타), `stations`(병합 결과), `stats`, `warnings`, `source`(mock/openapi) 등이 포함될 수 있습니다.
+
+`stations[]` 한 행 예시:
+
+```json
+{
+  "stationId": "108",
+  "stationName": "서교동 사거리",
+  "lat": 37.55,
+  "lng": 126.91,
+  "region": "서울",
+  "availableBike": 3,
+  "totalRack": 15,
+  "rentalCount": 9,
+  "returnCount": 11,
+  "congestion": { "ratio": 0.2, "level": "low", "label": "부족", "color": "#EF4444" },
+  "availability": { "prob": 0.35 },
+  "stationDetail": { "operBgngHrCn": "060000", "mngInstTelno": "02-0000-0000" }
+}
+```
+
+(실제 키·값은 데이터셋·병합 결과에 따라 다를 수 있습니다.)
 
 ---
 

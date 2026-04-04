@@ -1,6 +1,4 @@
-// 초보자 포인트: 탭/필터/지도 중심 이동에 쓰는 지역 메타데이터입니다.
-// 위경도는 대표 중심값(대략). 필요하면 더 정확한 값으로 바꿔도 됩니다.
-// instCd: 공공데이터포털 pbdo_v2 등에서 내려오는 지자체 코드(lcgvmnInstCd). 탭 key와 정규화 region을 맞출 때 사용합니다.
+/** 탭·필터·지도 중심. instCd는 OpenAPI `lcgvmnInstCd`와 매칭해 `normalize`의 region과 맞춤 */
 export const REGIONS = [
   { key: "서울", label: "서울", instCd: "1100000000", center: { lat: 37.5665, lng: 126.978 } },
   { key: "부산 기장군", label: "부산 기장군", instCd: "2671000000", center: { lat: 35.2442, lng: 129.2223 } },
