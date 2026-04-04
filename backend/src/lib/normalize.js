@@ -36,14 +36,11 @@ export function stationDetailFromRow(row) {
     rntstnFcltTypeNm: pickDetailStr(row, ["rntstnFcltTypeNm"]),
     rpfactInstlYn: pickDetailStr(row, ["rpfactInstlYn"]),
     arinjcInstlYn: pickDetailStr(row, ["arinjcInstlYn"]),
-    arinjcTypeNm: pickDetailStr(row, ["arinjcTypeNm"]),
     rntFeeTypeNm: pickDetailStr(row, ["rntFeeTypeNm"]),
     mngInstNm: pickDetailStr(row, ["mngInstNm"]),
     mngInstTelno: pickDetailStr(row, ["mngInstTelno"]),
     bcyclDataCrtrYmd: pickDetailStr(row, ["bcyclDataCrtrYmd"]),
     lcgvmnInstNm: pickDetailStr(row, ["lcgvmnInstNm"]),
-    rntstnAddr: pickDetailStr(row, ["rntstnAddr", "addr", "주소", "stationAddr"]),
-    rntstnZip: pickDetailStr(row, ["rntstnZip", "zip"]),
   };
   const hasAny = Object.values(detail).some((v) => v != null && v !== "");
   return hasAny ? detail : null;

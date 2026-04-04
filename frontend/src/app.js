@@ -44,24 +44,50 @@ const STATION_DETAIL_FIELDS = [
   { key: "rntstnFcltTypeNm", label: "대여소 유형" },
   { key: "rpfactInstlYn", label: "수리시설 설치" },
   { key: "arinjcInstlYn", label: "공기주입기 설치" },
-  { key: "arinjcTypeNm", label: "공기주입기 종류" },
   { key: "rntFeeTypeNm", label: "요금 유형" },
   { key: "mngInstNm", label: "관리 기관" },
   { key: "mngInstTelno", label: "연락처" },
   { key: "bcyclDataCrtrYmd", label: "데이터 기준일" },
   { key: "lcgvmnInstNm", label: "지자체(행정명)" },
-  { key: "rntstnAddr", label: "주소" },
-  { key: "rntstnZip", label: "우편번호" },
 ];
 
-const STATION_DETAIL_YN_KEYS = new Set(["rpfactInstlYn", "arinjcInstlYn"]);
+const STATION_DETAIL_TIME_KEYS = new Set(["operBgngHrCn", "operEndHrCn"]);
+const STATION_DETAIL_OX_KEYS = new Set(["rpfactInstlYn", "arinjcInstlYn"]);
 
-function formatYnDisplay(v) {
-  if (v == null || v === "") return "-";
+/** 공공데이터 HHMMSS(또는 숫자) → 오전/오후 + 시(2자리) */
+function formatOperHour(raw) {
+  if (raw == null || raw === "") return "-";
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits.length) return String(raw).trim() || "-";
+  const padded = digits.padStart(6, "0").slice(0, 6);
+  const h24 = Number(padded.slice(0, 2));
+  if (!Number.isFinite(h24) || h24 > 23) return String(raw).trim();
+
+  let period;
+  let hour12;
+  if (h24 === 0) {
+    period = "오전";
+    hour12 = 0;
+  } else if (h24 === 12) {
+    period = "오후";
+    hour12 = 12;
+  } else if (h24 < 12) {
+    period = "오전";
+    hour12 = h24;
+  } else {
+    period = "오후";
+    hour12 = h24 - 12;
+  }
+  const hh = String(hour12).padStart(2, "0");
+  return `${period} ${hh}시`;
+}
+
+function formatInstallOX(v) {
+  if (v == null || String(v).trim() === "") return "-";
   const u = String(v).trim().toUpperCase();
-  if (u === "Y") return "예";
-  if (u === "N") return "아니오";
-  return String(v).trim() || "-";
+  if (u === "Y" || u === "1" || u === "O" || u === "YES" || u === "예") return "O";
+  if (u === "N" || u === "0" || u === "X" || u === "NO" || u === "아니오") return "X";
+  return "-";
 }
 
 function renderStationDetail(detail) {
@@ -78,7 +104,12 @@ function renderStationDetail(detail) {
   for (const { key, label } of STATION_DETAIL_FIELDS) {
     const raw = d[key];
     const empty = raw == null || String(raw).trim() === "";
-    const display = empty ? "-" : STATION_DETAIL_YN_KEYS.has(key) ? formatYnDisplay(raw) : String(raw).trim();
+    let display = "-";
+    if (!empty) {
+      if (STATION_DETAIL_TIME_KEYS.has(key)) display = formatOperHour(raw);
+      else if (STATION_DETAIL_OX_KEYS.has(key)) display = formatInstallOX(raw);
+      else display = String(raw).trim();
+    }
     parts.push(
       `<div class="detailRow"><span class="detailRow__k">${escapeHtml(label)}</span><span class="detailRow__v">${escapeHtml(display)}</span></div>`,
     );
@@ -107,6 +138,8 @@ let appState = {
   source: "-",
   favorites: loadFavorites(),
   selectedStationId: null,
+  /** 동일 stationId가 여러 건일 때 마커 클릭으로 정확한 행을 가리키기 위한 목록 인덱스 */
+  selectedStationListIndex: null,
 };
 
 let map = null;
@@ -204,7 +237,8 @@ function renderFavorites() {
     btn.className = "favItemBtn";
     btn.textContent = st.stationName;
     btn.addEventListener("click", () => {
-      selectStation(st.stationId, { pan: true });
+      const lix = appState.stations.indexOf(st);
+      selectStation(st.stationId, { pan: true, listIndex: lix >= 0 ? lix : undefined });
     });
     li.appendChild(btn);
     els.favList.appendChild(li);
@@ -218,7 +252,8 @@ function clearMarkers() {
 
 function renderMarkers() {
   clearMarkers();
-  for (const st of appState.stations) {
+  for (let idx = 0; idx < appState.stations.length; idx++) {
+    const st = appState.stations[idx];
     if (st.lat == null || st.lng == null) continue;
 
     const pos = new kakao.maps.LatLng(st.lat, st.lng);
@@ -242,7 +277,7 @@ function renderMarkers() {
     marker.setMap(map);
 
     kakao.maps.event.addListener(marker, "click", () => {
-      selectStation(st.stationId, { pan: false });
+      selectStation(st.stationId, { pan: false, listIndex: idx });
     });
 
     markers.push(marker);
@@ -283,7 +318,9 @@ function renderRanking() {
     li.innerHTML = `<span class="rankName">${idx + 1}. ${r.stationName}</span>`;
     li.style.cursor = "pointer";
     li.addEventListener("click", () => {
-      selectStation(r.stationId, { pan: true });
+      const stHit = appState.stations.find((s) => String(s.stationId) === String(r.stationId));
+      const lix = stHit != null ? appState.stations.indexOf(stHit) : -1;
+      selectStation(r.stationId, { pan: true, listIndex: lix >= 0 ? lix : undefined });
     });
     els.rankList.appendChild(li);
   });
@@ -291,6 +328,8 @@ function renderRanking() {
 
 function updateCard(st) {
   if (!st) {
+    appState.selectedStationListIndex = null;
+    appState.selectedStationId = null;
     els.cardTitle.textContent = "대여소를 선택하세요";
     els.cardSub.textContent = "마커를 누르면 상세 정보가 표시됩니다.";
     els.cardBikes.textContent = "-";
@@ -334,13 +373,40 @@ function updateCard(st) {
   els.favToggleIcon.textContent = isFavorite(appState.favorites, st.stationId) ? "★" : "☆";
 }
 
-function selectStation(stationId, { pan }) {
-  appState.selectedStationId = stationId;
-  const st = appState.stations.find((s) => s.stationId === stationId);
+function selectStation(stationId, options = {}) {
+  const pan = options.pan === true;
+  const listIndex = options.listIndex;
+
+  let st = null;
+  if (typeof listIndex === "number" && listIndex >= 0 && listIndex < appState.stations.length) {
+    st = appState.stations[listIndex];
+    appState.selectedStationListIndex = listIndex;
+  } else {
+    appState.selectedStationListIndex = null;
+    if (stationId != null && stationId !== "") {
+      st = appState.stations.find((s) => String(s.stationId) === String(stationId));
+    }
+  }
+
+  if (st) {
+    appState.selectedStationId = st.stationId;
+  } else {
+    appState.selectedStationId = stationId ?? null;
+  }
+
   updateCard(st);
+
   if (pan && st?.lat != null && st?.lng != null) {
     panTo(map, { lat: st.lat, lng: st.lng }, 4);
   }
+}
+
+function stationAtCurrentSelection() {
+  const idx = appState.selectedStationListIndex;
+  if (typeof idx === "number" && idx >= 0 && idx < appState.stations.length) {
+    return appState.stations[idx];
+  }
+  return appState.stations.find((s) => String(s.stationId) === String(appState.selectedStationId));
 }
 
 async function loadRegion(regionKey) {
@@ -457,13 +523,14 @@ function searchAndSelect(mode) {
     alert("검색 결과가 없습니다.");
     return true;
   }
-  selectStation(best.stationId, { pan: true });
+  const lix = appState.stations.indexOf(best);
+  selectStation(best.stationId, { pan: true, listIndex: lix >= 0 ? lix : undefined });
   return true;
 }
 
 function wireEvents() {
   els.favToggleBtn.addEventListener("click", () => {
-    const st = appState.stations.find((s) => s.stationId === appState.selectedStationId);
+    const st = stationAtCurrentSelection();
     if (!st) return;
     appState.favorites = toggleFavorite(appState.favorites, st.stationId);
     els.favToggleIcon.textContent = isFavorite(appState.favorites, st.stationId) ? "★" : "☆";
@@ -476,7 +543,8 @@ function wireEvents() {
       const user = await getUserLocation();
       const best = pickBestStation({ user, mode: "rent" });
       if (!best) return alert("추천할 대여소가 없습니다.");
-      selectStation(best.stationId, { pan: true });
+      const lix = appState.stations.indexOf(best);
+      selectStation(best.stationId, { pan: true, listIndex: lix >= 0 ? lix : undefined });
     } catch (e) {
       alert(String(e?.message || e));
     }
@@ -488,7 +556,8 @@ function wireEvents() {
       const user = await getUserLocation();
       const best = pickBestStation({ user, mode: "return" });
       if (!best) return alert("추천할 반납 대여소가 없습니다.");
-      selectStation(best.stationId, { pan: true });
+      const lix = appState.stations.indexOf(best);
+      selectStation(best.stationId, { pan: true, listIndex: lix >= 0 ? lix : undefined });
     } catch (e) {
       alert(String(e?.message || e));
     }
@@ -510,6 +579,7 @@ function wireEvents() {
     // 기간 적용으로 데이터가 다시 로딩되면 카드가 초기화되므로,
     // 기존에 선택된 대여소가 있으면 동일 ID의 대여소를 찾아 카드만 복원한다.
     const prevSelectedStationId = appState.selectedStationId;
+    const prevListIndex = appState.selectedStationListIndex;
 
     // HTML date input: YYYY-MM-DD → API: YYYYMMDD
     const toYmd = (v) => (v ? v.replaceAll("-", "") : "");
@@ -530,8 +600,16 @@ function wireEvents() {
 
     try {
       await loadRegion(appState.currentRegion);
-      if (prevSelectedStationId) {
-        const st = appState.stations.find((x) => x.stationId === prevSelectedStationId);
+      if (typeof prevListIndex === "number" && prevListIndex >= 0 && prevListIndex < appState.stations.length) {
+        const cand = appState.stations[prevListIndex];
+        if (cand && String(cand.stationId) === String(prevSelectedStationId)) {
+          selectStation(prevSelectedStationId, { pan: false, listIndex: prevListIndex });
+        } else if (prevSelectedStationId) {
+          const st = appState.stations.find((x) => String(x.stationId) === String(prevSelectedStationId));
+          if (st) selectStation(prevSelectedStationId, { pan: false });
+        }
+      } else if (prevSelectedStationId) {
+        const st = appState.stations.find((x) => String(x.stationId) === String(prevSelectedStationId));
         if (st) selectStation(prevSelectedStationId, { pan: false });
       }
     } catch (err) {
