@@ -132,7 +132,13 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
 
   // 빠른 병합을 위해 Map 구성
   const stockMap = new Map(stock.map((s) => [String(s.stationKey).trim().toLowerCase(), s]));
-  const usageMap = new Map(usage.map((u) => [String(u.stationKey).trim().toLowerCase(), u]));
+  // 동일 대여소 키가 페이지/중복 행으로 여러 번 오면 마지막 행만 남으면 수치가 포털과 어긋날 수 있어, 먼저 수집된 행을 유지합니다.
+  const usageMap = new Map();
+  for (const u of usage) {
+    const k = String(u.stationKey).trim().toLowerCase();
+    if (!k) continue;
+    if (!usageMap.has(k)) usageMap.set(k, u);
+  }
 
   const integrated = stations.map((st) => {
     const k = keyOf(st);

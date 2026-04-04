@@ -204,6 +204,8 @@ export function normalizeUsageRow(row) {
   const rentalCount = toNum(
     pick(row, [
       "rntNocs",
+      "RNT_NOCS",
+      "rnt_nocs",
       "rentalCount",
       "rental_count",
       "대여횟수",
@@ -215,6 +217,8 @@ export function normalizeUsageRow(row) {
   const returnCount = toNum(
     pick(row, [
       "rtnNocs",
+      "RTN_NOCS",
+      "rtn_nocs",
       "returnCount",
       "return_count",
       "반납횟수",
