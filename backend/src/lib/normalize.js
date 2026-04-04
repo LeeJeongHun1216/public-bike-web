@@ -1,6 +1,8 @@
 // 공공데이터 API는 지자체/데이터셋마다 필드명이 다를 수 있습니다.
 // 아래 함수는 "가능한 많은 케이스"를 흡수하려는 안전한 정규화 계층입니다.
 
+import { regionKeyFromInstCd } from "../regions.js";
+
 function pick(obj, keys) {
   for (const k of keys) {
     if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
@@ -47,7 +49,18 @@ export function normalizeStationRow(row) {
     ]),
   );
   const lat = Number(
-    pick(row, ["lat", "latitude", "위도", "LAT", "stationLatitude", "위도값", "y", "Y"]),
+    pick(row, [
+      "lat",
+      "latitude",
+      "위도",
+      "LAT",
+      "stationLatitude",
+      "위도값",
+      "y",
+      "Y",
+      "rntstnLa",
+      "stnLa",
+    ]),
   );
   const lng = Number(
     pick(row, [
@@ -63,20 +76,23 @@ export function normalizeStationRow(row) {
       "X",
       // 공공데이터포털(자치단체 공영자전거 대여소 정보)에서 경도 필드가 lot로 내려오는 케이스
       "lot",
+      "rntstnLo",
+      "stnLo",
     ]),
   );
   const rawRegion = toStr(pick(row, ["region", "지역", "시도", "시군구", "city", "gu", "구", "sido", "lcgvmnInstNm"]));
   const instCd = toStr(pick(row, ["lcgvmnInstCd"]));
 
-  // 초보자 포인트: "서울특별시" 같은 명칭을 탭 키("서울")로 맞춥니다.
+  // 탭 키(REGIONS[].key)와 동일한 문자열이어야 getIntegratedStations의 region 필터에 걸립니다.
+  // 포털 응답의 lcgvmnInstNm은 "충청남도 공주시" 등이라 key("충남 공주시")와 불일치할 수 있으므로 instCd 우선.
+  const fromCode = regionKeyFromInstCd(instCd);
   const region =
-    instCd === "1100000000"
-      ? "서울"
-      : rawRegion
-          .replace("특별시", "")
-          .replace("광역시", "")
-          .replace("특별자치시", "")
-          .trim();
+    fromCode ||
+    rawRegion
+      .replace("특별시", "")
+      .replace("광역시", "")
+      .replace("특별자치시", "")
+      .trim();
 
   return {
     stationId: stationId || stationName, // ID가 없다면 이름을 대체키로 사용
