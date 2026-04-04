@@ -78,10 +78,9 @@ function regionExists(regionKey) {
 
 function buildUsageDateParams({ startDate, endDate }) {
   if (!startDate || !endDate) return {};
-  // 초보자 포인트: 실제 파라미터 이름은 데이터셋 문서를 확인해야 합니다.
-  // 기본값은 bgngYmd/endYmd로 두고, 필요하면 .env에서 변경할 수 있게 합니다.
-  const startKey = process.env.USAGE_START_PARAM || "bgngYmd";
-  const endKey = process.env.USAGE_END_PARAM || "endYmd";
+  // 자치단체 공영자전거 대여소별 대여/반납 건수 현황: fromCrtrYmd, toCrtrYmd (YYYYMMDD)
+  const startKey = process.env.USAGE_START_PARAM || "fromCrtrYmd";
+  const endKey = process.env.USAGE_END_PARAM || "toCrtrYmd";
   return { [startKey]: startDate, [endKey]: endDate };
 }
 
@@ -122,7 +121,9 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
   if (!urls.stockUrl) warnings.push("stockUrl(대여가능 현황정보) 미설정: availableBike/totalRack이 0으로 표시됩니다.");
   if (!urls.usageUrl) warnings.push("usageUrl(대여/반납 현황정보) 미설정: 대여/반납 통계가 0으로 표시됩니다.");
   if (urls.usageUrl && (!startDate || !endDate)) {
-    warnings.push("usage(대여/반납 현황정보): startDate/endDate(YYYYMMDD) 미입력 시 결과가 비어있을 수 있습니다.");
+    warnings.push(
+      "usage(대여/반납 현황): 웹에서 기간 미선택 시 fromCrtrYmd/toCrtrYmd가 전달되지 않아 rntNocs/rtnNocs가 비어 있을 수 있습니다.",
+    );
   }
 
   const stations = stationsRaw.map(normalizeStationRow);

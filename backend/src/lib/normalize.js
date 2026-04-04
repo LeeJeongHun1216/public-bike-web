@@ -177,14 +177,52 @@ export function normalizeStockRow(row) {
 
 export function normalizeUsageRow(row) {
   const stationId = toStr(
-    pick(row, ["stationId", "station_id", "대여소ID", "대여소id", "id", "rentStationId", "RENT_STATION_ID"]),
+    pick(row, [
+      "stationId",
+      "station_id",
+      "대여소ID",
+      "대여소id",
+      "id",
+      "rentStationId",
+      "RENT_STATION_ID",
+      "rntstnId",
+    ]),
   );
   const stationName = toStr(
-    pick(row, ["stationName", "station_name", "대여소명", "대여소이름", "name", "RENT_STATION_NM"]),
+    pick(row, [
+      "stationName",
+      "station_name",
+      "대여소명",
+      "대여소이름",
+      "name",
+      "RENT_STATION_NM",
+      "rntstnNm",
+    ]),
   );
 
-  const rentalCount = toNum(pick(row, ["rentalCount", "rental_count", "대여횟수", "대여건수", "rentCnt", "RENT_CNT"]));
-  const returnCount = toNum(pick(row, ["returnCount", "return_count", "반납횟수", "반납건수", "returnCnt", "RETURN_CNT"]));
+  // 대여소별 대여/반납 현황 API: rntNocs(대여 가능 자전거 수), rtnNocs(반납 가능 거치대 수)
+  const rentalCount = toNum(
+    pick(row, [
+      "rntNocs",
+      "rentalCount",
+      "rental_count",
+      "대여횟수",
+      "대여건수",
+      "rentCnt",
+      "RENT_CNT",
+    ]),
+  );
+  const returnCount = toNum(
+    pick(row, [
+      "rtnNocs",
+      "returnCount",
+      "return_count",
+      "반납횟수",
+      "반납건수",
+      "returnCnt",
+      "RETURN_CNT",
+    ]),
+  );
 
   // 시간대별 이용 데이터(가능한 경우): 예) {"00": 12, "01": 3, ...}
   const hourly = pick(row, ["hourly", "시간대별", "hourlyUsage", "HOUR_CNT_MAP"]);
