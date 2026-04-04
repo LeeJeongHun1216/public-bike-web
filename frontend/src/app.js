@@ -165,7 +165,7 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;");
 }
 
-// 초보자 포인트: 날짜 필터를 전역에 저장해 API 쿼리에 반영합니다.
+/** 대여/반납 기간 필터 → `api.js`가 쿼리로 전달 */
 window.APP_STATE = window.APP_STATE || { startDate: "", endDate: "" };
 
 let appState = {
@@ -173,8 +173,6 @@ let appState = {
   currentRegion: DEFAULT_REGION,
   stations: [],
   maxAvailableBike: 0,
-  stats: null,
-  source: "-",
   favorites: loadFavorites(),
   selectedStationId: null,
   /** 동일 stationId가 여러 건일 때 마커 클릭으로 정확한 행을 가리키기 위한 목록 인덱스 */
@@ -390,7 +388,6 @@ function fillCardStationMetrics(st) {
   els.cardRatio.textContent = fmtPct(displayRatio);
   els.cardCongestion.style.borderColor = displayLevel.color;
   els.cardCongestion.style.color = displayLevel.color;
-  // "보정여유/보정보통/보정부족" 같은 접두어 없이 통일해서 표시
   els.cardCongestion.textContent = displayLevel.label;
 }
 
@@ -419,6 +416,8 @@ function updateCard(st) {
     els.cardSub.textContent = "마커를 누르면 상세 정보가 표시됩니다.";
     els.cardBikes.textContent = "-";
     els.cardRatio.textContent = "-";
+    els.cardCongestion.style.borderColor = "";
+    els.cardCongestion.style.color = "";
     els.cardCongestion.textContent = "-";
     els.cardUsage.textContent = "-";
     renderStationDetail(null);
@@ -475,6 +474,23 @@ function stationAtCurrentSelection() {
   return appState.stations.find((s) => String(s.stationId) === String(appState.selectedStationId));
 }
 
+function restoreStationSelection(prevSelectedStationId, prevListIndex) {
+  if (prevSelectedStationId == null) return;
+  if (
+    typeof prevListIndex === "number" &&
+    prevListIndex >= 0 &&
+    prevListIndex < appState.stations.length
+  ) {
+    const cand = appState.stations[prevListIndex];
+    if (cand && String(cand.stationId) === String(prevSelectedStationId)) {
+      selectStation(prevSelectedStationId, { pan: false, listIndex: prevListIndex });
+      return;
+    }
+  }
+  const st = appState.stations.find((x) => String(x.stationId) === String(prevSelectedStationId));
+  if (st) selectStation(prevSelectedStationId, { pan: false });
+}
+
 async function loadRegion(regionKey, options = {}) {
   const { dateApplyLoading = false } = options;
   appState.currentRegion = regionKey;
@@ -492,8 +508,6 @@ async function loadRegion(regionKey, options = {}) {
     (m, s) => Math.max(m, Number(s.availableBike) || 0),
     0,
   );
-  appState.stats = data.stats || null;
-  appState.source = data.source || "-";
 
   const regionMeta = appState.regions.find((r) => r.key === regionKey);
   if (regionMeta) panTo(map, regionMeta.center, 6);
@@ -552,7 +566,7 @@ function pickBestStation({ user, mode }) {
         mode === "rent"
           ? ratio * 0.7 + (1 / (1 + dist)) * 0.3
           : (1 - ratio) * 0.7 + (1 / (1 + dist)) * 0.3;
-      return { s, dist, score };
+      return { s, score };
     })
     .sort((a, b) => b.score - a.score);
 
@@ -647,12 +661,9 @@ function wireEvents() {
   });
 
   els.applyDateBtn?.addEventListener("click", async () => {
-    // 기간 적용으로 데이터가 다시 로딩되면 카드가 초기화되므로,
-    // 기존에 선택된 대여소가 있으면 동일 ID의 대여소를 찾아 카드만 복원한다.
     const prevSelectedStationId = appState.selectedStationId;
     const prevListIndex = appState.selectedStationListIndex;
 
-    // HTML date input: YYYY-MM-DD → API: YYYYMMDD
     const toYmd = (v) => (v ? v.replaceAll("-", "") : "");
     const s = toYmd(els.startDate?.value || "");
     const e = toYmd(els.endDate?.value || "");
@@ -674,18 +685,7 @@ function wireEvents() {
 
     try {
       await loadRegion(appState.currentRegion, { dateApplyLoading });
-      if (typeof prevListIndex === "number" && prevListIndex >= 0 && prevListIndex < appState.stations.length) {
-        const cand = appState.stations[prevListIndex];
-        if (cand && String(cand.stationId) === String(prevSelectedStationId)) {
-          selectStation(prevSelectedStationId, { pan: false, listIndex: prevListIndex });
-        } else if (prevSelectedStationId) {
-          const st = appState.stations.find((x) => String(x.stationId) === String(prevSelectedStationId));
-          if (st) selectStation(prevSelectedStationId, { pan: false });
-        }
-      } else if (prevSelectedStationId) {
-        const st = appState.stations.find((x) => String(x.stationId) === String(prevSelectedStationId));
-        if (st) selectStation(prevSelectedStationId, { pan: false });
-      }
+      restoreStationSelection(prevSelectedStationId, prevListIndex);
     } catch (err) {
       alert(String(err?.message || err));
       const st = stationAtCurrentSelection();
@@ -699,20 +699,15 @@ async function bootstrap() {
   initTheme();
   await ensureKakaoLoaded();
 
-  // 초기 지도 생성: 서울 중심(탭 클릭 시 이동)
   map = createMap(document.getElementById("map"), { lat: 37.5665, lng: 126.978 });
 
-  // 초기 데이터 로드(백엔드가 regions도 내려줌)
   const init = await fetchBikes({ region: DEFAULT_REGION });
   appState.regions = init.regions || [];
   appState.stations = init.stations || [];
-  // 초기 접속에서도 '보정(대여가능확률)' 계산이 즉시 나오도록 maxAvailableBike 계산
   appState.maxAvailableBike = appState.stations.reduce(
     (m, s) => Math.max(m, Number(s.availableBike) || 0),
     0,
   );
-  appState.stats = init.stats || null;
-  appState.source = init.source || "-";
 
   renderTabs();
   renderMarkers();
@@ -722,7 +717,6 @@ async function bootstrap() {
   updateCard(null);
   wireEvents();
 
-  // 탭 UI는 init 이후에 활성 표시
   setTabActive(DEFAULT_REGION);
 
   hideInitialLoadOverlay();

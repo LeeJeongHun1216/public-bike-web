@@ -1,10 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-// 초보자 포인트:
-// 지역별 엔드포인트가 다를 때는 "매핑 파일"로 관리하는게 가장 편합니다.
-// - backend/apiMap.json 파일을 만들고 (apiMap.example.json 참고)
-// - 각 지역별로 stationsUrl/stockUrl/usageUrl 3개를 넣습니다.
+/** 지역별 URL은 `apiMap.json`(예: `apiMap.example.json` 참고); 없으면 `.env`의 API_*_URL 사용 */
 
 const API_MAP_PATH = path.join(process.cwd(), "apiMap.json");
 
@@ -45,7 +42,6 @@ export async function resolveRegionUrls(region) {
     stationsParams: resolved.stationsParams || fallback.stationsParams,
     stockParams: resolved.stockParams || fallback.stockParams,
     usageParams: resolved.usageParams || fallback.usageParams,
-    source: entry ? "apiMap" : "env",
   };
 }
 

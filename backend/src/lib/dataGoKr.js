@@ -1,11 +1,6 @@
 import axios from "axios";
 
-// 초보자 포인트:
-// 공공데이터포털(OpenAPI)은 보통 아래 쿼리 파라미터가 필요합니다.
-// - serviceKey: 인증키
-// - pageNo / numOfRows: 페이지
-// - type=json: JSON 응답
-// 다만 데이터셋마다 파라미터/응답 구조가 조금씩 다를 수 있어, 여기서는 "안전한" 파서를 제공합니다.
+/** 공공데이터 OpenAPI: serviceKey·페이지·type=json 등 파라미터와 응답 형태 차이를 흡수하는 클라이언트/파서 */
 
 export function createClient() {
   return axios.create({

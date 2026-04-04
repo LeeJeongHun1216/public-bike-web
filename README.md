@@ -1,35 +1,51 @@
 # 전국 공영자전거 통합 정보 웹서비스
 
-공공데이터포털 오픈 API 3종을 통합해, 지역 탭 + 지도(카카오맵) 기반으로 **대여소/재고/대여·반납** 정보를 직관적으로 보여주는 웹서비스입니다.
+공공데이터포털 오픈 API(대여소 정보·대여가능 현황·대여/반납 건수 등)를 묶어, **지역 탭 + 카카오맵**으로 대여소·재고·대여·반납 정보를 보여주는 웹앱입니다.
 
-- **백엔드**: Node.js + Express + Axios (3개 API 호출 → 병합 → 통합 JSON 제공)
-- **프론트엔드**: HTML/CSS/Vanilla JS + 카카오맵 (마커/탭/즐겨찾기/localStorage)
+| 구분 | 기술 |
+|------|------|
+| 백엔드 | Node.js, Express, Axios — API 병합 후 통합 JSON |
+| 프론트 | HTML/CSS, ES 모듈(Vanilla JS), 카카오맵, `localStorage` 즐겨찾기 |
 
 ---
 
 ## 프로젝트 구조
 
 ```
-/project
-├── /frontend
-└── /backend
+2026 통합데이터/
+├── frontend/
+│   ├── index.html          # 카카오 SDK(appkey), 초기 로딩 오버레이
+│   ├── config.js           # 백엔드 베이스 URL(APP_CONFIG)
+│   ├── styles.css
+│   └── src/
+│       ├── app.js          # UI·지도·탭·기간 적용
+│       ├── api.js          # /api/bikes 호출, nowHour·날짜 쿼리
+│       ├── map.js          # 마커·맵 유틸
+│       └── storage.js      # 즐겨찾기
+├── backend/
+│   ├── apiMap.json         # 지역별 URL(없으면 .env 공통 URL)
+│   ├── apiMap.example.json
+│   ├── .env.example
+│   └── src/
+│       ├── server.js
+│       ├── regions.js
+│       ├── routes/         # health, bikes
+│       ├── services/       # bikeAggregator, apiMap
+│       ├── lib/            # dataGoKr, normalize, ratio, poissonAvailability
+│       └── mocks/          # USE_MOCK=true 일 때
+└── README.md
 ```
 
 ---
 
-## 실행 방법
+## 백엔드 실행
 
-### 1) 백엔드 실행
-
-`backend/.env.example`을 복사해서 `backend/.env`를 만듭니다.
-
-- **바로 실행(모의데이터)**: `USE_MOCK=true` 유지
-- **실데이터 연동**: `USE_MOCK=false`로 바꾸고 아래 값들을 채웁니다.
-  - `DATA_GO_KR_SERVICE_KEY`
-  - (전국 공통 URL이라면) `API_STATIONS_URL`, `API_STOCK_URL`, `API_USAGE_URL`
-  - (지역별 URL이 다르면) `backend/apiMap.json`에 지역→URL 3종을 입력 (예: `backend/apiMap.example.json` 참고)
-
-설치 및 실행:
+1. `backend/.env.example`을 복사해 `backend/.env` 생성.
+2. **모의 데이터**: `USE_MOCK=true`
+3. **실서비스**: `USE_MOCK=false` 후 `DATA_GO_KR_SERVICE_KEY` 및 URL 설정  
+   - 전역 공통: `API_STATIONS_URL`, `API_STOCK_URL`, `API_USAGE_URL`  
+   - 지역별: `backend/apiMap.json` (`apiMap.example.json` 참고)
+4. 선택: `FRONTEND_ORIGIN` — CORS 허용 출처(미설정 시 `cors` 기본 동작).
 
 ```bash
 cd backend
@@ -37,107 +53,68 @@ npm install
 npm run dev
 ```
 
-정상 확인:
-
-- `GET /api/health` → `http://127.0.0.1:5179/api/health`
-- `GET /api/bikes?region=서울` → `http://127.0.0.1:5179/api/bikes?region=서울`
+- 헬스: `GET http://127.0.0.1:5179/api/health`
+- 통합 데이터: `GET http://127.0.0.1:5179/api/bikes?region=서울`
 
 ---
 
-### 2) 프론트엔드 실행
+## 프론트엔드 실행
 
-프론트는 정적 파일이라서 **Live Server(권장)** 또는 간단한 정적 서버로 실행하면 됩니다.
-
-#### 방법 A) VSCode/커서 Live Server
-- `frontend/index.html` 우클릭 → “Open with Live Server”
-- 기본 주소 예: `http://127.0.0.1:5500`
-
-#### 방법 B) Node 정적 서버
+정적 파일이므로 Live Server 또는 정적 HTTP 서버로 `frontend` 루트를 열면 됩니다.
 
 ```bash
 cd frontend
-npx http-server -p 5500
+npx --yes serve -l 5500
 ```
 
----
+### `frontend/config.js`
 
-## 필수 설정(카카오맵 키)
+`window.APP_CONFIG.BACKEND_BASE_URL`이 `/api/bikes` 요청의 호스트입니다.  
+로컬 백엔드면 `http://127.0.0.1:5179`, 배포 백엔드면 해당 HTTPS URL로 맞춥니다.
 
-`frontend/index.html`에서 아래 부분의 `appkey`를 본인 **카카오 JavaScript 키**로 바꾸세요.
+### 카카오 JavaScript 키
 
-```html
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_JAVASCRIPT_KEY&autoload=false" defer></script>
-```
-
-### 카카오 JavaScript SDK 도메인 등록
-
-카카오 디벨로퍼스 > 내 애플리케이션 > 플랫폼 > Web에서 사이트 도메인을 등록해야 지도가 뜹니다.
-
-- 로컬 개발: `http://127.0.0.1:5500` (Live Server 기준)
-- 필요 시 추가: `http://localhost:5500`
-- 백엔드 주소(`5179`)는 SDK 도메인 등록 대상이 아닙니다. 브라우저에서 열리는 프론트 주소만 등록하면 됩니다.
+`frontend/index.html`의 카카오 SDK 스크립트 URL에 `appkey=`를 본인 키로 바꿉니다.  
+카카오 디벨로퍼스 **플랫폼 > Web**에 실제로 열리는 출처(예: `http://127.0.0.1:5500`, 배포 도메인)를 등록합니다.
 
 ---
 
-## 백엔드 API
+## API 요약
 
-### `GET /api/bikes?region=서울`
+### `GET /api/bikes`
 
-3개 API를 **대여소 ID 또는 이름 기준**으로 병합해 통합 JSON을 제공합니다.
-대여/반납 현황정보는 기간이 필요한 경우가 있어 `startDate/endDate`(YYYYMMDD)를 추가로 받을 수 있습니다.
+| 쿼리 | 설명 |
+|------|------|
+| `region` | 지역명(예: `서울`) |
+| `startDate`, `endDate` | `YYYYMMDD` — 대여/반납 통계 기간(`fromCrtrYmd` / `toCrtrYmd`로 매핑) |
+| `nowHour` | `0`–`23` — 포아송 기반 대여 가능 확률 계산용(프론트가 로컬 시각으로 전달) |
 
-- 예: `GET /api/bikes?region=서울&startDate=20260401&endDate=20260407`
-
-예시 구조(일부):
-
-```json
-{
-  "region": "서울",
-  "count": 123,
-  "stations": [
-    {
-      "stationId": "SEOUL-001",
-      "stationName": "강남역 3번 출구",
-      "lat": 37.49,
-      "lng": 127.02,
-      "availableBike": 2,
-      "totalRack": 10,
-      "rentalCount": 5420,
-      "returnCount": 5311,
-      "congestion": { "ratio": 0.2, "label": "부족", "color": "#EF4444" }
-    }
-  ],
-  "stats": {
-    "topStations": [{ "stationName": "...", "rentalCount": 8920 }],
-    "peakHour": "12",
-    "hourlyAgg": { "08": 540, "18": 910 }
-  }
-}
-```
+응답에 `regions`(탭용 메타), `stations`(병합 결과), `stats`, `warnings`, `source`(mock/openapi) 등이 포함될 수 있습니다.
 
 ---
 
-## 기능 요약
+## 화면 기능
 
-- **지역 탭**: 클릭 시 지도 중심 이동 + 지역 데이터만 표시
-- **대여 가능 확률(카드 표시)**: 포아송 기반 확률(0~1)을 %로 표시
-  - 0~30%: 부족(빨강)
-  - 30~70%: 보통(주황)
-  - 70%~: 여유(초록)
-  - (대여/반납 통계가 없거나 계산 불가인 경우) `availableBike / totalRack`(가능 시) 또는 지역 보정비율로 폴백
-- **마커 색상(혼잡도)**: `availableBike / totalRack` 기준(가능 시)이며, `totalRack`이 없으면 지역 내 `availableBike` 최대값 기준 보정비율로 표시
-- **즐겨찾기**: 대여소 즐겨찾기 저장/삭제(localStorage) + 목록 표시
-- **데이터 활용**: 추천 순위(대여소별 자전거 보유량 기준 상위 10), 대여/반납 검색
+- **지역 탭**: 선택 시 해당 지역 데이터만 지도·목록에 반영.
+- **초기 로딩**: 첫 진입 시 데이터·탭·마커가 준비될 때까지 전체 오버레이로 안내 문구 표시 후 해제.
+- **마커 색**: 거치대 대비 가용 대수 비율(없으면 지역 내 최대 가용 대수 대비 보정).
+- **대여 가능 확률**: 포아송 모델(시간대·기간 반영); 불가 시 거치대 비율 또는 보정 비율로 표시.
+- **대여소 카드**: 이름·지역·자전거 수·확률·혼잡도·대여/반납 건수·공공데이터 상세 필드.
+- **대여/반납 기간 검색 + 적용**: 기간을 넣고 적용 시 API 재요청. **대여소가 이미 선택된 경우** 로딩 중 카드 상단에 `대여/반납 정보를 조회 중입니다.`를 잠시 표시한 뒤, 같은 대여소 정보로 다시 채움.
+- **즐겨찾기**, **추천 순위(자전거 보유 상위)**, **대여소명 검색**, **내 위치 기반 대여/반납 추천**.
 
 ---
 
-## 지역 코드(지자체 코드) 기반 호출
+## 배포 메모
 
-이 프로젝트는 `backend/apiMap.json`에 각 지역별 `lcgvmnInstCd`를 미리 등록해두었습니다.
-엔드포인트는 pbdo_v2의 3개로 고정이며 지역마다 코드만 바뀌는 구조입니다.
+- 프론트는 GitHub Pages 등 정적 호스팅에 올리고, `config.js`의 백엔드 URL을 운영 API로 둡니다.
+- 백엔드는 Render·Railway 등에 배포 시 `.env`에 서비스 키와 URL을 설정하고, CORS용 `FRONTEND_ORIGIN`을 프론트 출처에 맞춥니다.
 
-대여/반납 현황정보 날짜 파라미터 기본값:
+---
 
-- 시작일: `fromCrtrYmd`
-- 종료일: `toCrtrYmd`
+## 대여/반납 API 날짜 파라미터
 
+데이터셋에 따라 쿼리 키 이름을 바꿀 수 있습니다.
+
+- 기본: `fromCrtrYmd`, `toCrtrYmd`
+- 환경변수: `USAGE_START_PARAM`, `USAGE_END_PARAM`

@@ -10,7 +10,6 @@ dotenv.config();
 
 const app = express();
 
-// 초보자 포인트: 프론트(브라우저)에서 백엔드 호출할 때 CORS가 필요합니다.
 app.use(
   cors({
     origin: process.env.FRONTEND_ORIGIN || true,

@@ -1,7 +1,6 @@
-// 카카오맵 유틸(마커 생성/색상)
+/** 카카오맵: SVG data URL 마커, 로드/맵 생성, 이동 */
 
 function svgMarker(color, label) {
-  // 초보자 포인트: SVG를 data URL로 만들어 MarkerImage로 사용합니다.
   const svg = encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="38" height="42" viewBox="0 0 44 48">
       <path d="M22 47c9-12 16-20 16-30A16 16 0 1 0 6 17c0 10 7 18 16 30z" fill="${color}"/>
@@ -13,7 +12,6 @@ function svgMarker(color, label) {
 }
 
 export function createMarkerImage({ color }) {
-  // 빨강/주황/초록 모두 내부에 자전거 아이콘을 표시합니다.
   const label = "🚲";
   const url = svgMarker(color, label);
   const size = new kakao.maps.Size(38, 42);
