@@ -394,6 +394,23 @@ function fillCardStationMetrics(st) {
   els.cardCongestion.textContent = displayLevel.label;
 }
 
+/** 대여/반납 기간 적용 후 재조회 중: 안내 문구만 바꾸고 선택 대여소 ID는 유지합니다. */
+function updateCardDateApplyLoading() {
+  els.cardTitle.textContent = "대여/반납 정보를 조회 중입니다.";
+  els.cardSub.textContent = "";
+  els.cardBikes.textContent = "-";
+  els.cardRatio.textContent = "-";
+  els.cardCongestion.textContent = "-";
+  els.cardCongestion.style.borderColor = "";
+  els.cardCongestion.style.color = "";
+  els.cardUsage.textContent = "-";
+  renderStationDetail(null);
+  els.favToggleBtn.disabled = true;
+  const sid = appState.selectedStationId;
+  els.favToggleIcon.textContent =
+    sid != null && isFavorite(appState.favorites, sid) ? "★" : "☆";
+}
+
 function updateCard(st) {
   if (!st) {
     appState.selectedStationListIndex = null;
@@ -458,10 +475,15 @@ function stationAtCurrentSelection() {
   return appState.stations.find((s) => String(s.stationId) === String(appState.selectedStationId));
 }
 
-async function loadRegion(regionKey) {
+async function loadRegion(regionKey, options = {}) {
+  const { dateApplyLoading = false } = options;
   appState.currentRegion = regionKey;
   setTabActive(regionKey);
-  updateCard(null);
+  if (dateApplyLoading && stationAtCurrentSelection()) {
+    updateCardDateApplyLoading();
+  } else {
+    updateCard(null);
+  }
 
   const data = await fetchBikes({ region: regionKey });
   appState.regions = data.regions || [];
@@ -647,8 +669,11 @@ function wireEvents() {
     window.APP_STATE.startDate = s;
     window.APP_STATE.endDate = e;
 
+    const dateApplyLoading =
+      prevSelectedStationId != null && stationAtCurrentSelection() != null;
+
     try {
-      await loadRegion(appState.currentRegion);
+      await loadRegion(appState.currentRegion, { dateApplyLoading });
       if (typeof prevListIndex === "number" && prevListIndex >= 0 && prevListIndex < appState.stations.length) {
         const cand = appState.stations[prevListIndex];
         if (cand && String(cand.stationId) === String(prevSelectedStationId)) {
@@ -663,6 +688,9 @@ function wireEvents() {
       }
     } catch (err) {
       alert(String(err?.message || err));
+      const st = stationAtCurrentSelection();
+      if (st) updateCard(st);
+      else updateCard(null);
     }
   });
 }
