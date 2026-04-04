@@ -16,6 +16,8 @@ const els = {
   cardRatio: document.getElementById("cardRatio"),
   cardCongestion: document.getElementById("cardCongestion"),
   cardUsage: document.getElementById("cardUsage"),
+  stationDetailBlock: document.getElementById("stationDetailBlock"),
+  stationDetailList: document.getElementById("stationDetailList"),
 
   favToggleBtn: document.getElementById("favToggleBtn"),
   favToggleIcon: document.getElementById("favToggleIcon"),
@@ -33,6 +35,65 @@ const els = {
 };
 
 const DEFAULT_REGION = "서울";
+
+/** 백엔드 stationDetail 키와 동일 순서(공공데이터 대여소 정보) */
+const STATION_DETAIL_FIELDS = [
+  { key: "operBgngHrCn", label: "운영 시작" },
+  { key: "operEndHrCn", label: "운영 종료" },
+  { key: "rntstnOperDayoffDayCn", label: "휴무일" },
+  { key: "rntstnFcltTypeNm", label: "대여소 유형" },
+  { key: "rpfactInstlYn", label: "수리시설 설치" },
+  { key: "arinjcInstlYn", label: "공기주입기 설치" },
+  { key: "arinjcTypeNm", label: "공기주입기 종류" },
+  { key: "rntFeeTypeNm", label: "요금 유형" },
+  { key: "mngInstNm", label: "관리 기관" },
+  { key: "mngInstTelno", label: "연락처" },
+  { key: "bcyclDataCrtrYmd", label: "데이터 기준일" },
+  { key: "lcgvmnInstNm", label: "지자체(행정명)" },
+  { key: "rntstnAddr", label: "주소" },
+  { key: "rntstnZip", label: "우편번호" },
+];
+
+const STATION_DETAIL_YN_KEYS = new Set(["rpfactInstlYn", "arinjcInstlYn"]);
+
+function formatYnDisplay(v) {
+  if (v == null || v === "") return "-";
+  const u = String(v).trim().toUpperCase();
+  if (u === "Y") return "예";
+  if (u === "N") return "아니오";
+  return String(v).trim() || "-";
+}
+
+function renderStationDetail(detail) {
+  const block = els.stationDetailBlock;
+  const list = els.stationDetailList;
+  if (!block || !list) return;
+  if (detail === null) {
+    block.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+  const d = detail && typeof detail === "object" ? detail : {};
+  const parts = [];
+  for (const { key, label } of STATION_DETAIL_FIELDS) {
+    const raw = d[key];
+    const empty = raw == null || String(raw).trim() === "";
+    const display = empty ? "-" : STATION_DETAIL_YN_KEYS.has(key) ? formatYnDisplay(raw) : String(raw).trim();
+    parts.push(
+      `<div class="detailRow"><span class="detailRow__k">${escapeHtml(label)}</span><span class="detailRow__v">${escapeHtml(display)}</span></div>`,
+    );
+  }
+  list.innerHTML = parts.join("");
+  block.hidden = false;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
 
 // 초보자 포인트: 날짜 필터를 전역에 저장해 API 쿼리에 반영합니다.
 window.APP_STATE = window.APP_STATE || { startDate: "", endDate: "" };
@@ -236,6 +297,7 @@ function updateCard(st) {
     els.cardRatio.textContent = "-";
     els.cardCongestion.textContent = "-";
     els.cardUsage.textContent = "-";
+    renderStationDetail(null);
     els.favToggleBtn.disabled = true;
     els.favToggleIcon.textContent = "☆";
     return;
@@ -265,6 +327,8 @@ function updateCard(st) {
   els.cardCongestion.textContent = displayLevel.label;
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
+
+  renderStationDetail(st.stationDetail ?? {});
 
   els.favToggleBtn.disabled = false;
   els.favToggleIcon.textContent = isFavorite(appState.favorites, st.stationId) ? "★" : "☆";

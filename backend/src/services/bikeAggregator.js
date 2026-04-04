@@ -159,6 +159,7 @@ export async function getIntegratedStations({ region, startDate, endDate, nowHou
       lat: st.lat,
       lng: st.lng,
       region: st.region,
+      stationDetail: st.stationDetail ?? null,
       availableBike,
       totalRack,
       rentalCount,

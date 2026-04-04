@@ -20,6 +20,35 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** 자치단체 공영자전거 대여소 정보(pbdo_v2 등) 부가 필드 — 카드 표시용 */
+function pickDetailStr(row, keys) {
+  const v = pick(row, Array.isArray(keys) ? keys : [keys]);
+  const s = toStr(v);
+  return s || null;
+}
+
+export function stationDetailFromRow(row) {
+  if (!row || typeof row !== "object") return null;
+  const detail = {
+    operBgngHrCn: pickDetailStr(row, ["operBgngHrCn"]),
+    operEndHrCn: pickDetailStr(row, ["operEndHrCn"]),
+    rntstnOperDayoffDayCn: pickDetailStr(row, ["rntstnOperDayoffDayCn"]),
+    rntstnFcltTypeNm: pickDetailStr(row, ["rntstnFcltTypeNm"]),
+    rpfactInstlYn: pickDetailStr(row, ["rpfactInstlYn"]),
+    arinjcInstlYn: pickDetailStr(row, ["arinjcInstlYn"]),
+    arinjcTypeNm: pickDetailStr(row, ["arinjcTypeNm"]),
+    rntFeeTypeNm: pickDetailStr(row, ["rntFeeTypeNm"]),
+    mngInstNm: pickDetailStr(row, ["mngInstNm"]),
+    mngInstTelno: pickDetailStr(row, ["mngInstTelno"]),
+    bcyclDataCrtrYmd: pickDetailStr(row, ["bcyclDataCrtrYmd"]),
+    lcgvmnInstNm: pickDetailStr(row, ["lcgvmnInstNm"]),
+    rntstnAddr: pickDetailStr(row, ["rntstnAddr", "addr", "주소", "stationAddr"]),
+    rntstnZip: pickDetailStr(row, ["rntstnZip", "zip"]),
+  };
+  const hasAny = Object.values(detail).some((v) => v != null && v !== "");
+  return hasAny ? detail : null;
+}
+
 export function normalizeStationRow(row) {
   const stationId = toStr(
     pick(row, [
@@ -100,6 +129,7 @@ export function normalizeStationRow(row) {
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
     region,
+    stationDetail: stationDetailFromRow(row),
     raw: row,
   };
 }
