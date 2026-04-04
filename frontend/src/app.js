@@ -5,6 +5,7 @@ import { ensureKakaoLoaded, createMap, panTo, createMarkerImage } from "./map.js
 const THEME_KEY = "bikeMapTheme";
 
 const els = {
+  initialLoadOverlay: document.getElementById("initialLoadOverlay"),
   themeToggleBtn: document.getElementById("themeToggleBtn"),
   regionTabs: document.getElementById("regionTabs"),
   favList: document.getElementById("favList"),
@@ -216,6 +217,13 @@ function initTheme() {
   });
 }
 
+function hideInitialLoadOverlay() {
+  const el = els.initialLoadOverlay;
+  if (!el) return;
+  el.hidden = true;
+  el.setAttribute("aria-busy", "false");
+}
+
 function fmtPct(ratio) {
   if (ratio == null || !Number.isFinite(Number(ratio))) return "-";
   const n = Math.round((ratio || 0) * 100);
@@ -364,25 +372,7 @@ function renderRanking() {
   });
 }
 
-function updateCard(st) {
-  if (!st) {
-    appState.selectedStationListIndex = null;
-    appState.selectedStationId = null;
-    els.cardTitle.textContent = "대여소를 선택하세요";
-    els.cardSub.textContent = "마커를 누르면 상세 정보가 표시됩니다.";
-    els.cardBikes.textContent = "-";
-    els.cardRatio.textContent = "-";
-    els.cardCongestion.textContent = "-";
-    els.cardUsage.textContent = "-";
-    renderStationDetail(null);
-    els.favToggleBtn.disabled = true;
-    els.favToggleIcon.textContent = "☆";
-    return;
-  }
-
-  els.cardTitle.textContent = st.stationName;
-  els.cardSub.textContent = st.region ? st.region : "지역 정보 없음";
-
+function fillCardStationMetrics(st) {
   const hasPoisson =
     st.availability?.prob != null && Number.isFinite(Number(st.availability.prob));
   const hasRack = Number(st.totalRack) > 0;
@@ -402,6 +392,27 @@ function updateCard(st) {
   els.cardCongestion.style.color = displayLevel.color;
   // "보정여유/보정보통/보정부족" 같은 접두어 없이 통일해서 표시
   els.cardCongestion.textContent = displayLevel.label;
+}
+
+function updateCard(st) {
+  if (!st) {
+    appState.selectedStationListIndex = null;
+    appState.selectedStationId = null;
+    els.cardTitle.textContent = "대여소를 선택하세요";
+    els.cardSub.textContent = "마커를 누르면 상세 정보가 표시됩니다.";
+    els.cardBikes.textContent = "-";
+    els.cardRatio.textContent = "-";
+    els.cardCongestion.textContent = "-";
+    els.cardUsage.textContent = "-";
+    renderStationDetail(null);
+    els.favToggleBtn.disabled = true;
+    els.favToggleIcon.textContent = "☆";
+    return;
+  }
+
+  els.cardTitle.textContent = st.stationName;
+  els.cardSub.textContent = st.region ? st.region : "지역 정보 없음";
+  fillCardStationMetrics(st);
 
   els.cardUsage.textContent = `대여 ${st.rentalCount}회 / 반납 ${st.returnCount}회`;
 
@@ -685,9 +696,12 @@ async function bootstrap() {
 
   // 탭 UI는 init 이후에 활성 표시
   setTabActive(DEFAULT_REGION);
+
+  hideInitialLoadOverlay();
 }
 
 bootstrap().catch((e) => {
+  hideInitialLoadOverlay();
   alert(String(e?.message || e));
 });
 
