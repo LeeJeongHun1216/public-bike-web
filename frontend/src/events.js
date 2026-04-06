@@ -20,7 +20,9 @@ export function wireEvents() {
   els.stationDetailToggle?.addEventListener("click", () => {
     if (els.stationDetailBlock?.hidden) return;
     const expanded = els.stationDetailToggle.getAttribute("aria-expanded") === "true";
-    setStationDetailExpanded(!expanded);
+    const next = !expanded;
+    appState.stationDetailExpanded = next;
+    setStationDetailExpanded(next);
   });
 
   els.favToggleBtn.addEventListener("click", () => {

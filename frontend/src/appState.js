@@ -15,4 +15,6 @@ export const appState = {
   selectedStationId: null,
   /** 동일 stationId가 여러 건일 때 마커 클릭으로 정확한 행을 가리키기 위한 목록 인덱스 */
   selectedStationListIndex: null,
+  /** 대여소 상세 정보 패널: 다른 대여소 선택 시에도 유지 */
+  stationDetailExpanded: true,
 };

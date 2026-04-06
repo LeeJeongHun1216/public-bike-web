@@ -1,4 +1,5 @@
 import { els } from "./elements.js";
+import { appState } from "./appState.js";
 
 const DETAIL_EMPTY = "정보 없음";
 
@@ -91,7 +92,6 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;");
 }
 
-/** 대여소를 바꿀 때마다 다시 펼친 상태로 맞춤 */
 export function setStationDetailExpanded(expanded) {
   const btn = els.stationDetailToggle;
   const list = els.stationDetailList;
@@ -134,5 +134,5 @@ export function renderStationDetail(detail) {
   }
   list.innerHTML = parts.join("");
   block.hidden = false;
-  setStationDetailExpanded(true);
+  setStationDetailExpanded(appState.stationDetailExpanded);
 }
