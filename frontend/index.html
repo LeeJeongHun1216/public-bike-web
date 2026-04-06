@@ -87,8 +87,25 @@
               </div>
 
               <div class="card__stats card__stats--detail" id="stationDetailBlock" hidden>
-                <div class="card__statsTitle">대여소 상세 정보</div>
-                <div class="detailList" id="stationDetailList" aria-label="대여소 상세 정보"></div>
+                <div class="detailSectionHead">
+                  <div class="card__statsTitle detailSectionHead__title">대여소 상세 정보</div>
+                  <button
+                    type="button"
+                    class="detailToggleBtn"
+                    id="stationDetailToggle"
+                    aria-expanded="true"
+                    aria-controls="stationDetailList"
+                  >
+                    <span class="detailToggleBtn__label">접기</span>
+                    <span class="detailToggleBtn__icon" aria-hidden="true">▲</span>
+                  </button>
+                </div>
+                <div
+                  class="detailList"
+                  id="stationDetailList"
+                  role="region"
+                  aria-label="대여소 상세 정보"
+                ></div>
               </div>
 
               <div class="card__stats">

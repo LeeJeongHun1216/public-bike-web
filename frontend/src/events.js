@@ -14,8 +14,15 @@ import {
   pickBestStation,
   searchAndSelect,
 } from "./recommend.js";
+import { setStationDetailExpanded } from "./stationDetailView.js";
 
 export function wireEvents() {
+  els.stationDetailToggle?.addEventListener("click", () => {
+    if (els.stationDetailBlock?.hidden) return;
+    const expanded = els.stationDetailToggle.getAttribute("aria-expanded") === "true";
+    setStationDetailExpanded(!expanded);
+  });
+
   els.favToggleBtn.addEventListener("click", () => {
     const st = stationAtCurrentSelection();
     if (!st) return;

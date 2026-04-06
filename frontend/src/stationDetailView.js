@@ -91,6 +91,22 @@ function escapeHtml(s) {
     .replaceAll('"', "&quot;");
 }
 
+/** 대여소를 바꿀 때마다 다시 펼친 상태로 맞춤 */
+export function setStationDetailExpanded(expanded) {
+  const btn = els.stationDetailToggle;
+  const list = els.stationDetailList;
+  const block = els.stationDetailBlock;
+  if (!btn || !list || !block || block.hidden) return;
+
+  btn.setAttribute("aria-expanded", String(expanded));
+  list.hidden = !expanded;
+
+  const label = btn.querySelector(".detailToggleBtn__label");
+  const icon = btn.querySelector(".detailToggleBtn__icon");
+  if (label) label.textContent = expanded ? "접기" : "펼치기";
+  if (icon) icon.textContent = expanded ? "▲" : "▼";
+}
+
 export function renderStationDetail(detail) {
   const block = els.stationDetailBlock;
   const list = els.stationDetailList;
@@ -118,4 +134,5 @@ export function renderStationDetail(detail) {
   }
   list.innerHTML = parts.join("");
   block.hidden = false;
+  setStationDetailExpanded(true);
 }

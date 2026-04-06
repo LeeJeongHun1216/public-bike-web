@@ -13,6 +13,7 @@ export const els = {
   cardCongestion: document.getElementById("cardCongestion"),
   cardUsage: document.getElementById("cardUsage"),
   stationDetailBlock: document.getElementById("stationDetailBlock"),
+  stationDetailToggle: document.getElementById("stationDetailToggle"),
   stationDetailList: document.getElementById("stationDetailList"),
 
   favToggleBtn: document.getElementById("favToggleBtn"),
